@@ -98,9 +98,13 @@ def main():
     for fp in txt_files:
         rel = fp.relative_to(data_dir)
         category = rel.parts[0] if len(rel.parts) > 1 else "root"
-        if include_cats and category not in include_cats:
-            continue
-        if category in exclude_cats:
+        matches_include = (not include_cats) or (
+            category in include_cats or fp.stem in include_cats or rel.as_posix() in include_cats
+        )
+        matches_exclude = (
+            category in exclude_cats or fp.stem in exclude_cats or rel.as_posix() in exclude_cats
+        )
+        if not matches_include or matches_exclude:
             continue
         filtered_files.append((fp, category))
 

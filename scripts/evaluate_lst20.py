@@ -188,6 +188,18 @@ def main():
         help="Path to extra dictionary",
     )
     parser.add_argument(
+        "--include",
+        type=str,
+        default=None,
+        help="Comma-separated category names or file stems to include (e.g. 'transit,proper-names')",
+    )
+    parser.add_argument(
+        "--exclude",
+        type=str,
+        default=None,
+        help="Comma-separated category names or file stems to exclude (e.g. 'compounds,proper-names')",
+    )
+    parser.add_argument(
         "--limit-files",
         type=int,
         default=None,
@@ -207,11 +219,41 @@ def main():
 
     # Create merged temp dict
     tmp_merged = Path("/tmp/thaibreak_eval_merged.txt")
-    with open(tmp_merged, "w", encoding="utf-8") as out:
-        with open(args.base_dict, "r", encoding="utf-8") as f:
-            out.write(f.read())
-        with open(args.extra_dict, "r", encoding="utf-8") as f:
-            out.write(f.read())
+    if args.include or args.exclude:
+        data_dir = Path("data")
+        txt_files = sorted(data_dir.rglob("*.txt"))
+        include_cats = {c.strip() for c in args.include.split(",")} if args.include else None
+        exclude_cats = {c.strip() for c in args.exclude.split(",")} if args.exclude else set()
+        
+        extra_words = set()
+        for fp in txt_files:
+            rel = fp.relative_to(data_dir)
+            category = rel.parts[0] if len(rel.parts) > 1 else "root"
+            matches_include = (not include_cats) or (
+                category in include_cats or fp.stem in include_cats or rel.as_posix() in include_cats
+            )
+            matches_exclude = (
+                category in exclude_cats or fp.stem in exclude_cats or rel.as_posix() in exclude_cats
+            )
+            if not matches_include or matches_exclude:
+                continue
+            with open(fp, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    w = line.strip()
+                    if w and not w.startswith("#"):
+                        extra_words.add(w)
+
+        with open(tmp_merged, "w", encoding="utf-8") as out:
+            with open(args.base_dict, "r", encoding="utf-8") as f:
+                out.write(f.read())
+            for w in sorted(extra_words):
+                out.write(f"{w}\n")
+    else:
+        with open(tmp_merged, "w", encoding="utf-8") as out:
+            with open(args.base_dict, "r", encoding="utf-8") as f:
+                out.write(f.read())
+            with open(args.extra_dict, "r", encoding="utf-8") as f:
+                out.write(f.read())
 
     print("1. Running Model 1: Standard Base Dictionary...")
     t0 = time.time()
