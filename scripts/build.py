@@ -55,6 +55,18 @@ def main():
         help="Optional path to base dictionary (e.g. ../thai-break-service/data/words.txt)",
     )
     parser.add_argument(
+        "--include",
+        type=str,
+        default=None,
+        help="Comma-separated category names to include (e.g. 'transit,proper-names')",
+    )
+    parser.add_argument(
+        "--exclude",
+        type=str,
+        default=None,
+        help="Comma-separated category names to exclude (e.g. 'misspellings,slang')",
+    )
+    parser.add_argument(
         "--merged-output",
         type=Path,
         default=None,
@@ -79,16 +91,30 @@ def main():
         print("Error: No .txt files found in data directory.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"📦 Building extra dictionary from {len(txt_files)} file(s) in {data_dir}...")
+    include_cats = {c.strip() for c in args.include.split(",")} if args.include else None
+    exclude_cats = {c.strip() for c in args.exclude.split(",")} if args.exclude else set()
+
+    filtered_files = []
+    for fp in txt_files:
+        rel = fp.relative_to(data_dir)
+        category = rel.parts[0] if len(rel.parts) > 1 else "root"
+        if include_cats and category not in include_cats:
+            continue
+        if category in exclude_cats:
+            continue
+        filtered_files.append((fp, category))
+
+    if not filtered_files:
+        print("Error: No dictionary files matched the specified filter criteria.", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"📦 Building extra dictionary from {len(filtered_files)} file(s) in {data_dir}...")
 
     category_stats = defaultdict(lambda: {"files": 0, "words": set()})
     all_extra_words = set()
 
-    for file_path in txt_files:
-        rel = file_path.relative_to(data_dir)
-        category = rel.parts[0] if len(rel.parts) > 1 else "root"
+    for file_path, category in filtered_files:
         words = load_words_from_file(file_path)
-
         category_stats[category]["files"] += 1
         category_stats[category]["words"].update(words)
         all_extra_words.update(words)
