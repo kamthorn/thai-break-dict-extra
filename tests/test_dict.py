@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""
+Unit tests for thai-break-dict-extra scripts.
+"""
+
+import tempfile
+import unittest
+from pathlib import Path
+
+# Add scripts directory to sys.path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+
+from format import clean_and_format_file
+from validate import validate_file
+from build import load_words_from_file, thai_sort_key
+
+
+class TestDictScripts(unittest.TestCase):
+
+    def test_thai_sort_key(self):
+        # Leading vowels (เ แ โ ใ ไ) should be sorted based on following consonant
+        self.assertEqual(thai_sort_key("เก"), "กเ")
+        self.assertEqual(thai_sort_key("กบ"), "กบ")
+        self.assertEqual(thai_sort_key("โคน"), "คโน")
+
+    def test_validate_and_format(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.txt"
+
+            # Create an unformatted file with BOM, CRLF, duplicates, blank line, and unsorted words
+            content = "\ufeffปลา\r\n\r\nกบ\r\nกบ\r\nหมู   \r\nไก่\r\n"
+            test_file.write_bytes(content.encode("utf-8"))
+
+            # Validate should catch multiple errors
+            errors = validate_file(test_file)
+            self.assertTrue(len(errors) > 0)
+
+            # Format the file
+            original_lines, formatted_count = clean_and_format_file(test_file)
+            self.assertEqual(formatted_count, 4)  # กบ, ไก่, ปลา, หมู (unique: 4)
+
+            # Validate again - should have 0 errors now
+            errors_after = validate_file(test_file)
+            self.assertEqual(errors_after, [])
+
+    def test_load_words(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "sample.txt"
+            test_file.write_text("# Comment\nคำที่หนึ่ง\nคำที่สอง\n# Another comment\n", encoding="utf-8")
+
+            words = load_words_from_file(test_file)
+            self.assertEqual(words, {"คำที่หนึ่ง", "คำที่สอง"})
+
+
+if __name__ == "__main__":
+    unittest.main()
