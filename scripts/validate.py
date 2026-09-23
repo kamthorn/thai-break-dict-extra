@@ -77,6 +77,12 @@ def validate_file(filepath: Path) -> list[str]:
             if char in line:
                 errors.append(f"Line {idx}: '{line}' contains invisible character {desc} (U+{ord(char):04X}).")
 
+        # Single bare character check (length 1)
+        if len(line) == 1:
+            errors.append(
+                f"Line {idx}: '{line}' is a bare single character. Bare single consonants break tokenizers and are disallowed."
+            )
+
         # Duplicate check within file
         if line in seen_words:
             errors.append(f"Line {idx}: Duplicate word '{line}' found.")
