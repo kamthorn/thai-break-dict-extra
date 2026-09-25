@@ -124,19 +124,19 @@ python3 scripts/build.py --base-dict ../thai-break-service/data/words.txt
 วัดผลกับคลังข้อมูลที่ตัดคำไว้แล้ว (Gold Corpus) ได้ทั้ง LST20 และ Blackboard Treebank รายงาน Word P/R/F1 (ตำแหน่งคำตรงกันทั้งคำ), Boundary P/R/F1 และแยกสาเหตุของคำที่ตัดผิด (ไม่มีในพจนานุกรม / มีแต่ตัดผิด / ไม่ใช่อักษรไทย) ข้อความถูกแบ่งเป็นท่อนที่ช่องว่างและขอบเขตประโยค และไม่นับช่องว่างในการให้คะแนน
 
 ```bash
-# ThaiBreak (Python binding ของ ../PHPThaiNLP) บน LST20 eval
+# ThaiBreak (Python binding ของ ../thai-break) บน LST20 eval
 python3 scripts/benchmark.py --corpus lst20 --corpus-dir ../LST20_Corpus/eval \
-    --dict ../PHPThaiNLP/data/words.txt
+    --dict ../thai-break/data/words.txt
 
 # เพิ่มคำจาก dist/words-extra.txt และใช้ตัวตัดคำใดก็ได้ที่อ่านข้อความทีละบรรทัดจาก stdin
 # แล้วพิมพ์คำคั่นด้วย "|" ({dict} จะถูกแทนด้วยพจนานุกรมที่รวมแล้ว)
 python3 scripts/benchmark.py --corpus lst20 --corpus-dir ../LST20_Corpus/eval \
-    --dict ../PHPThaiNLP/data/words.txt --dict dist/words-extra.txt \
-    --segmenter-cmd "php ../PHPThaiNLP/tools/segment.php {dict}"
+    --dict ../thai-break/data/words.txt --dict dist/words-extra.txt \
+    --segmenter-cmd "php ../thai-break/tools/segment.php {dict}"
 
 # Blackboard Treebank ระดับคำย่อย (แยกที่ "|") โดยตัดประโยคที่ซ้ำกับ LST20 train ออก
 python3 scripts/benchmark.py --corpus blackboard --corpus-dir ../Corpus-BlackboardTreebank/thai10_conll \
-    --subword --exclude-overlap ../LST20_Corpus/train --dict ../PHPThaiNLP/data/words.txt
+    --subword --exclude-overlap ../LST20_Corpus/train --dict ../thai-break/data/words.txt
 ```
 
 ใช้ train/eval ในการปรับแต่ง และรายงานผลบน test เฉพาะผลสุดท้ายเท่านั้น
@@ -145,7 +145,7 @@ python3 scripts/benchmark.py --corpus blackboard --corpus-dir ../Corpus-Blackboa
 
 ```bash
 python3 scripts/extract_vocab.py --corpus lst20 --corpus-dir ../LST20_Corpus/train \
-    --base-dict ../PHPThaiNLP/data/words.txt
+    --base-dict ../thai-break/data/words.txt
 # -> local/lst20-train-vocab.tsv, local/lst20-train-new-words.tsv
 ```
 

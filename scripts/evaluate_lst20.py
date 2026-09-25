@@ -11,8 +11,8 @@ import sys
 import time
 from pathlib import Path
 
-# Add PHPThaiNLP python binding
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "PHPThaiNLP" / "python"))
+# Add thai-break python binding
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "thai-break" / "python"))
 import thaibreak
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -96,7 +96,7 @@ def main():
     parser.add_argument(
         "--base-dict",
         type=Path,
-        default=Path("../PHPThaiNLP/data/words.txt"),
+        default=Path("../thai-break/data/words.txt"),
         help="Path to base dictionary",
     )
     parser.add_argument(

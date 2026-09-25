@@ -9,7 +9,7 @@ corpus license allows it (the LST20 agreement restricts derived use).
 
 Example:
   python3 scripts/extract_vocab.py --corpus lst20 --corpus-dir ../LST20_Corpus/train \\
-      --base-dict ../PHPThaiNLP/data/words.txt
+      --base-dict ../thai-break/data/words.txt
   # -> local/lst20-train-vocab.tsv      word<TAB>count, all Thai words
   # -> local/lst20-train-new-words.tsv  words missing from the base dictionary
 """
