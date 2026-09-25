@@ -4,19 +4,19 @@ scripts/benchmark.py
 Measure word segmentation accuracy against a gold corpus.
 
 Examples:
-  # ThaiBreak (Python binding of ../PHPThaiNLP) on the LST20 eval split
+  # ThaiBreak (Python binding of ../thai-break) on the LST20 eval split
   python3 scripts/benchmark.py --corpus lst20 --corpus-dir ../LST20_Corpus/eval \\
-      --dict ../PHPThaiNLP/data/words.txt
+      --dict ../thai-break/data/words.txt
 
   # Base + extra words, any segmenter that reads lines on stdin and prints
   # tokens joined by "|" ({dict} is replaced by the merged dictionary path)
   python3 scripts/benchmark.py --corpus lst20 --corpus-dir ../LST20_Corpus/eval \\
-      --dict ../PHPThaiNLP/data/words.txt --dict dist/words-extra.txt \\
-      --segmenter-cmd "php ../PHPThaiNLP/tools/segment.php {dict}"
+      --dict ../thai-break/data/words.txt --dict dist/words-extra.txt \\
+      --segmenter-cmd "php ../thai-break/tools/segment.php {dict}"
 
   # Blackboard Treebank, sub-word level, without sentences that occur in LST20 train
   python3 scripts/benchmark.py --corpus blackboard --corpus-dir ../Corpus-BlackboardTreebank/thai10_conll \\
-      --subword --exclude-overlap ../LST20_Corpus/train --dict ../PHPThaiNLP/data/words.txt
+      --subword --exclude-overlap ../LST20_Corpus/train --dict ../thai-break/data/words.txt
 
 Tune on train/eval data and report the test split only for final results.
 The corpora are not part of this repository; see README for their licenses.
@@ -122,7 +122,7 @@ def evaluate(gold_chunks: list[list[str]], predictions: list[list[str]], dict_wo
 
 
 def thaibreak_segmenter(binding_dir: Path, dict_path: Path) -> Segmenter:
-    """Use the thaibreak Python binding (Rust core) of PHPThaiNLP."""
+    """Use the thaibreak Python binding (Rust core) of thai-break."""
     sys.path.insert(0, str(binding_dir))
     import thaibreak  # type: ignore
 
@@ -182,7 +182,7 @@ def main() -> None:
     parser.add_argument("--exclude-overlap", type=Path, help="Drop chunks whose text occurs in this LST20 split")
     parser.add_argument("--dict", type=Path, action="append", required=True, help="Word list (repeat to merge)")
     parser.add_argument("--segmenter-cmd", help='Command reading stdin lines; "{dict}" is replaced by the dictionary path')
-    parser.add_argument("--binding-dir", type=Path, default=Path(__file__).resolve().parents[2] / "PHPThaiNLP" / "python")
+    parser.add_argument("--binding-dir", type=Path, default=Path(__file__).resolve().parents[2] / "thai-break" / "python")
     parser.add_argument("--limit", type=int, help="Evaluate only the first N chunks")
     parser.add_argument("--json", action="store_true", help="Print results as JSON")
     args = parser.parse_args()
