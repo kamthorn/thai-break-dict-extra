@@ -119,6 +119,44 @@ python3 scripts/build.py --exclude misspellings,slang --output dist/words-formal
 python3 scripts/build.py --base-dict ../thai-break-service/data/words.txt
 ```
 
+### 4. วัดความแม่นยำการตัดคำ (`benchmark.py`)
+
+วัดผลกับคลังข้อมูลที่ตัดคำไว้แล้ว (Gold Corpus) ได้ทั้ง LST20 และ Blackboard Treebank รายงาน Word P/R/F1 (ตำแหน่งคำตรงกันทั้งคำ), Boundary P/R/F1 และแยกสาเหตุของคำที่ตัดผิด (ไม่มีในพจนานุกรม / มีแต่ตัดผิด / ไม่ใช่อักษรไทย) ข้อความถูกแบ่งเป็นท่อนที่ช่องว่างและขอบเขตประโยค และไม่นับช่องว่างในการให้คะแนน
+
+```bash
+# ThaiBreak (Python binding ของ ../PHPThaiNLP) บน LST20 eval
+python3 scripts/benchmark.py --corpus lst20 --corpus-dir ../LST20_Corpus/eval \
+    --dict ../PHPThaiNLP/data/words.txt
+
+# เพิ่มคำจาก dist/words-extra.txt และใช้ตัวตัดคำใดก็ได้ที่อ่านข้อความทีละบรรทัดจาก stdin
+# แล้วพิมพ์คำคั่นด้วย "|" ({dict} จะถูกแทนด้วยพจนานุกรมที่รวมแล้ว)
+python3 scripts/benchmark.py --corpus lst20 --corpus-dir ../LST20_Corpus/eval \
+    --dict ../PHPThaiNLP/data/words.txt --dict dist/words-extra.txt \
+    --segmenter-cmd "php ../PHPThaiNLP/tools/segment.php {dict}"
+
+# Blackboard Treebank ระดับคำย่อย (แยกที่ "|") โดยตัดประโยคที่ซ้ำกับ LST20 train ออก
+python3 scripts/benchmark.py --corpus blackboard --corpus-dir ../Corpus-BlackboardTreebank/thai10_conll \
+    --subword --exclude-overlap ../LST20_Corpus/train --dict ../PHPThaiNLP/data/words.txt
+```
+
+ใช้ train/eval ในการปรับแต่ง และรายงานผลบน test เฉพาะผลสุดท้ายเท่านั้น
+
+### 5. นับคำจากคลังข้อมูลเพื่อทดลอง (`extract_vocab.py`)
+
+```bash
+python3 scripts/extract_vocab.py --corpus lst20 --corpus-dir ../LST20_Corpus/train \
+    --base-dict ../PHPThaiNLP/data/words.txt
+# -> local/lst20-train-vocab.tsv, local/lst20-train-new-words.tsv
+```
+
+ไฟล์ที่ได้อยู่ใน `local/` ซึ่งถูก gitignore ไว้ ใช้ทดสอบเท่านั้น
+
+> [!IMPORTANT]
+> **คลังข้อมูลไม่ได้อยู่ใน repository นี้และห้ามนำเข้ามา**
+> - **LST20 (NECTEC):** ใช้ได้ฟรีสำหรับงานวิจัย งานไม่ใช่เชิงพาณิชย์ และโครงการโอเพนซอร์ส (โปรดอ้างอิงรายงานเทคนิค) ห้ามแก้ไขหรือแจกจ่ายข้อมูล การใช้เชิงพาณิชย์ต้องได้รับอนุญาต ดู `AGREEMENT.txt` ของคลังข้อมูล
+> - **Blackboard Treebank:** ข้อความมาจากแหล่งข่าวเดียวกับ LST20 ให้ถือเงื่อนไขเดียวกันจนกว่าจะตรวจสอบ license ของต้นทาง
+> - รายการคำและค่าความถี่ที่ได้จากคลังข้อมูลเหล่านี้ใช้ทดสอบใน `local/` เท่านั้น ห้ามรวมเข้า `data/` หรือ `dist/` จนกว่าจะได้รับอนุญาตจากเจ้าของคลังข้อมูล
+
 ---
 
 ## 🧪 การรันชุดทดสอบ (Unit Tests)
