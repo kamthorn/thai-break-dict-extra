@@ -6,108 +6,39 @@ Compares Base Dictionary vs Base + Dict-Extra.
 """
 
 import argparse
-import glob
 import os
 import sys
 import time
 from pathlib import Path
-from collections import Counter
 
 # Add PHPThaiNLP python binding
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "PHPThaiNLP" / "python"))
 import thaibreak
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from benchmark import evaluate  # noqa: E402
+from corpora import lst20_file_chunks  # noqa: E402
+
 
 def evaluate_split(files: list[Path], dict_path: str):
     """
     Evaluates word segmentation on given LST20 files using the specified dictionary.
+    Chunks end at spaces and sentence boundaries (see corpora.lst20_file_chunks).
     """
     thaibreak.init(dict_path)
-    
-    total_true_b = 0
-    total_pred_b = 0
-    correct_b = 0
-
-    words_true = 0
-    words_pred = 0
-    words_correct = 0
-
-    # Collect word segmentation diffs
-    fixed_words = Counter()
-    split_words = Counter()
-
-    for fn in files:
-        with open(fn, "r", encoding="utf-8", errors="ignore") as f:
-            chunk = []
-            for line in f:
-                parts = line.strip().split("\t")
-                if len(parts) >= 2:
-                    w = parts[0]
-                    if w == "_":
-                        if chunk:
-                            raw_text = "".join(chunk)
-                            
-                            # Boundary evaluation
-                            b_true = set()
-                            pos = 0
-                            for t in chunk[:-1]:
-                                pos += len(t)
-                                b_true.add(pos)
-
-                            preds = thaibreak.words(raw_text)
-                            b_pred = set()
-                            pos = 0
-                            for t in preds[:-1]:
-                                pos += len(t)
-                                b_pred.add(pos)
-
-                            total_true_b += len(b_true)
-                            total_pred_b += len(b_pred)
-                            correct_b += len(b_true & b_pred)
-
-                            # Word-level span evaluation
-                            words_true += len(chunk)
-                            words_pred += len(preds)
-                            
-                            s_true = set()
-                            p = 0
-                            for t in chunk:
-                                s_true.add((p, p + len(t), t))
-                                p += len(t)
-
-                            s_pred = set()
-                            p = 0
-                            for t in preds:
-                                s_pred.add((p, p + len(t), t))
-                                p += len(t)
-
-                            # Match on spans (p_start, p_end)
-                            true_spans = {(s[0], s[1]) for s in s_true}
-                            pred_spans = {(s[0], s[1]) for s in s_pred}
-                            words_correct += len(true_spans & pred_spans)
-
-                            chunk = []
-                    else:
-                        chunk.append(w)
-
-    bp = correct_b / total_pred_b if total_pred_b else 0
-    br = correct_b / total_true_b if total_true_b else 0
-    bf1 = 2 * bp * br / (bp + br) if (bp + br) else 0
-
-    wp = words_correct / words_pred if words_pred else 0
-    wr = words_correct / words_true if words_true else 0
-    wf1 = 2 * wp * wr / (wp + wr) if (wp + wr) else 0
+    chunks = [chunk for fn in files for chunk in lst20_file_chunks(fn)]
+    result = evaluate(chunks, [thaibreak.words("".join(chunk)) for chunk in chunks])
 
     return {
-        "boundary_p": bp,
-        "boundary_r": br,
-        "boundary_f1": bf1,
-        "word_p": wp,
-        "word_r": wr,
-        "word_f1": wf1,
-        "words_true": words_true,
-        "words_pred": words_pred,
-        "words_correct": words_correct,
+        "boundary_p": result["boundary"]["precision"],
+        "boundary_r": result["boundary"]["recall"],
+        "boundary_f1": result["boundary"]["f1"],
+        "word_p": result["word"]["precision"],
+        "word_r": result["word"]["recall"],
+        "word_f1": result["word"]["f1"],
+        "words_true": result["gold_words"],
+        "words_pred": result["predicted_words"],
+        "words_correct": result["correct_words"],
     }
 
 
@@ -115,25 +46,12 @@ def find_concrete_examples(files: list[Path], base_dict: str, extra_dict: str, l
     """
     Finds concrete clauses where segmentation differed between Base and Extra.
     """
-    thaibreak.init(base_dict)
-    base_results = {}
-    
-    # Store first 100 clauses
+    # Collect up to 150 short chunks (3-12 words) from the first 30 files
     clauses = []
     for fn in files[:30]:
-        with open(fn, "r", encoding="utf-8", errors="ignore") as f:
-            chunk = []
-            for line in f:
-                parts = line.strip().split("\t")
-                if len(parts) >= 2:
-                    w = parts[0]
-                    if w == "_":
-                        if len(chunk) >= 3 and len(chunk) <= 12:
-                            raw = "".join(chunk)
-                            clauses.append((chunk, raw))
-                        chunk = []
-                    else:
-                        chunk.append(w)
+        for chunk in lst20_file_chunks(fn):
+            if 3 <= len(chunk) <= 12:
+                clauses.append((chunk, "".join(chunk)))
         if len(clauses) >= 150:
             break
 
@@ -178,7 +96,7 @@ def main():
     parser.add_argument(
         "--base-dict",
         type=Path,
-        default=Path("../thai-break-service/data/words.txt"),
+        default=Path("../PHPThaiNLP/data/words.txt"),
         help="Path to base dictionary",
     )
     parser.add_argument(
@@ -297,7 +215,7 @@ def main():
     print("=" * 70)
     print(f"Ground Truth Words Evaluated : {base_res['words_true']:,}")
     print(f"Correct Words (Base)         : {base_res['words_correct']:,}")
-    print(f"Correct Words (+ Dict-Extra) : {extra_res['words_correct']:,} (+{extra_res['words_correct'] - base_res['words_correct']:,} words)")
+    print(f"Correct Words (+ Dict-Extra) : {extra_res['words_correct']:,} ({extra_res['words_correct'] - base_res['words_correct']:+,} words)")
     print("=" * 70)
 
     print("\n🔍 CONCRETE EXAMPLES OF SEGMENTATION CHANGES:")

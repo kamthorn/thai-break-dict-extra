@@ -112,6 +112,8 @@ def evaluate(gold_chunks: list[list[str]], predictions: list[list[str]], dict_wo
         "word": {"precision": wp, "recall": wr, "f1": wf},
         "boundary": {"precision": bp, "recall": br, "f1": bf},
         "gold_words": words_gold,
+        "predicted_words": words_pred,
+        "correct_words": words_correct,
         "chunks": len(gold_chunks),
         "skipped_chunks": skipped,
         "errors": dict(errors.most_common()),
