@@ -85,13 +85,28 @@ def get_tier_weight(category: str, stem: str) -> float:
     return CATEGORY_DEFAULT_WEIGHTS.get(category, 2.0)
 
 
-def compute_word_weight(word: str, base_weight: float) -> float:
+def compute_word_weight(word: str, base_weight: float, is_base_word: bool = False) -> float:
     """
-    Applies length bias for long multi-syllable compound words (length >= 5 chars).
+    Computes linguistic tier weight with safety guardrails:
+    1. Homograph / Base-overlap guardrail: Short base words (<= 4 chars, e.g. คง, ลอง, สอง, พล, พาน, แพร่, เลย, ตาก)
+       must NOT be boosted with high proper-names tier weights, as that would break compound words like 'ความมั่นคง',
+       'ทดลอง', 'สะพาน', 'เผยแพร่'. Keep them at baseline 1.0.
+    2. Short word guardrail: Very short non-abbreviation words (<= 3 chars without dot) are capped at 1.5.
+    3. Multi-syllable compound bonus: Words with length >= 5 receive a progressive length bonus.
     """
+    # Guardrail 1: Base-overlap short words penalty
+    if is_base_word and len(word) <= 4:
+        return 1.0
+
+    # Guardrail 2: Very short words without dot (avoid cross-word collisions)
+    if "." not in word and len(word) <= 3:
+        return min(base_weight, 1.5)
+
+    # Multi-syllable compound bonus
     if base_weight >= 2.0 and len(word) >= 5:
         length_bonus = min(1.5, 0.1 * (len(word) - 4))
         return round(base_weight + length_bonus, 2)
+
     return round(base_weight, 2)
 
 
@@ -315,6 +330,23 @@ def main():
     print(f"📦 Building extra dictionary from {len(filtered_files)} file(s) in {data_dir} (Weights: {args.weights_mode})...")
 
     category_stats = defaultdict(lambda: {"files": 0, "words": set()})
+    # Discover base dictionary to enforce homograph guardrails
+    base_dict_path = args.base_dict
+    if not base_dict_path:
+        candidates = [
+            Path("../thai-break/data/words.txt"),
+            Path("/home/kamthorn/code/PHPThaiNLP/data/words.txt"),
+        ]
+        for c in candidates:
+            if c.exists():
+                base_dict_path = c
+                break
+
+    base_words = set()
+    if base_dict_path and base_dict_path.exists():
+        base_words = load_words_from_file(base_dict_path)
+        print(f"🛡️  Loaded {len(base_words):,} base words from {base_dict_path} (homograph guardrails active)")
+
     word_weights: dict[str, float] = {}
 
     for file_path, category, stem in filtered_files:
@@ -325,7 +357,8 @@ def main():
         base_tier_weight = get_tier_weight(category, stem) if args.weights_mode == "tier" else 1.0
 
         for w in words:
-            w_weight = compute_word_weight(w, base_tier_weight) if args.weights_mode == "tier" else 1.0
+            is_base = w in base_words
+            w_weight = compute_word_weight(w, base_tier_weight, is_base_word=is_base) if args.weights_mode == "tier" else 1.0
             # Keep the highest weight if word appears in multiple categories
             if w not in word_weights or w_weight > word_weights[w]:
                 word_weights[w] = w_weight
