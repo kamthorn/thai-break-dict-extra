@@ -100,26 +100,39 @@ python3 scripts/format.py
 python3 scripts/validate.py
 ```
 
-### 3. การรวมคำศัพท์ (`build.py`)
-รวบรวมคำศัพท์จากหมวดหมู่ที่ต้องการ กรองคำซ้ำ และส่งออกเป็นไฟล์เดียว:
+### 3. การรวมคำศัพท์และการสร้างพจนานุกรม (`build.py`)
+รวบรวมคำศัพท์จากหมวดหมู่ที่ต้องการ คำนวณค่าน้ำหนักตาม Tier หมวดหมู่ และส่งออกเป็น 3 รูปแบบพร้อมกันใน `dist/`:
+- `dist/words-extra.txt`: รายการคำเรียงตามตัวอักษร (1 คำต่อบรรทัด)
+- `dist/words-extra.tsv`: คำศัพท์พร้อมค่าน้ำหนักภาษาศาสตร์ (Tier Weights 0.5 - 8.0)
+- `dist/words-extra.dawg`: พจนานุกรมไบนารีคอมแพกต์ Minimal DAWG ขนาดเล็กพิเศษ (~125 KB)
 
 ```bash
-# 1. รวมคำศัพท์พิเศษทั้งหมดเป็น dist/words-extra.txt (ค่าเริ่มต้น)
+# 1. รวมคำศัพท์พิเศษทั้งหมดพร้อมคำนวณค่าน้ำหนัก (ค่าเริ่มต้น)
 python3 scripts/build.py
 
 # 2. เลือกเฉพาะบางหมวดหมู่ (Modular Build ด้วย --include)
-# เช่น รวมเฉพาะหมวดคมนาคม ยานยนต์ และชื่อเฉพาะ
 python3 scripts/build.py --include transit,automotive,proper-names --output dist/words-transit.txt
 
-# 3. ยกเว้นบางหมวดหมู่ที่ไม่ต้องการ (ด้วย --exclude)
-# เช่น ไม่ต้องการคำสะกดผิดและคำสแลง
-python3 scripts/build.py --exclude misspellings,slang --output dist/words-formal.txt
+# 3. กำหนดโหมดน้ำหนัก (tier / uniform)
+python3 scripts/build.py --weights-mode tier
 
 # 4. ทดสอบเปรียบเทียบกับ Base Dictionary (Optional)
-python3 scripts/build.py --base-dict ../thai-break-service/data/words.txt
+python3 scripts/build.py --base-dict ../thai-break/data/words.txt
 ```
 
-### 4. วัดความแม่นยำการตัดคำ (`benchmark.py`)
+### 4. การสกัดข้อมูลเปิดสาธารณะ (Open Data Harvesters)
+
+โปรเจกต์นี้มีสคริปต์สกัดคำศัพท์จากแหล่งข้อมูลสาธารณะที่ถูกกฎหมายลิขสิทธิ์ 100%:
+
+```bash
+# สกัดเขตและอำเภอทางการทั่วประเทศ (930 อำเภอ) จากข้อมูลเปิดกรมการปกครอง (DOPA)
+python3 scripts/harvest_geodata.py
+
+# สกัดชื่อเฉพาะ มหาวิทยาลัย โรงเรียน ทางหลวง องค์กร จากฐานข้อมูลเปิดของวิกิพีเดียไทย (CC BY-SA 4.0)
+python3 scripts/harvest_wikipedia_titles.py
+```
+
+### 5. วัดความแม่นยำการตัดคำ (`benchmark.py`)
 
 วัดผลกับคลังข้อมูลที่ตัดคำไว้แล้ว (Gold Corpus) ได้ทั้ง LST20 และ Blackboard Treebank รายงาน Word P/R/F1 (ตำแหน่งคำตรงกันทั้งคำ), Boundary P/R/F1 และแยกสาเหตุของคำที่ตัดผิด (ไม่มีในพจนานุกรม / มีแต่ตัดผิด / ไม่ใช่อักษรไทย) ข้อความถูกแบ่งเป็นท่อนที่ช่องว่างและขอบเขตประโยค และไม่นับช่องว่างในการให้คะแนน
 
@@ -141,7 +154,7 @@ python3 scripts/benchmark.py --corpus blackboard --corpus-dir ../Corpus-Blackboa
 
 ใช้ train/eval ในการปรับแต่ง และรายงานผลบน test เฉพาะผลสุดท้ายเท่านั้น
 
-### 5. นับคำจากคลังข้อมูลเพื่อทดลอง (`extract_vocab.py`)
+### 6. นับคำจากคลังข้อมูลเพื่อทดลอง (`extract_vocab.py`)
 
 ```bash
 python3 scripts/extract_vocab.py --corpus lst20 --corpus-dir ../LST20_Corpus/train \

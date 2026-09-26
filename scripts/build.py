@@ -2,16 +2,97 @@
 """
 scripts/build.py
 Builds and combines categorized dictionary files into unified output files.
-Can also merge with an existing base dictionary (e.g. from thai-break-service).
+Generates both plain wordlists (.txt), weighted dictionaries (.tsv), and compact binary DAWG (.dawg).
+Can also merge with an existing base dictionary (e.g. from thai-break).
 """
 
 import argparse
 import os
+import struct
 import sys
 from pathlib import Path
 from collections import defaultdict
 
 STRIP_CHARS = "\ufeff\u200b\u200c\u200d\u200e\u200f\r\n\t "
+
+# --- Tier Weight Configuration ---
+DEFAULT_TIER_WEIGHTS = {
+    # Tier 1: Fixed Proper Names, Countries & Months (Weight 6.0 - 8.0)
+    "proper-names/provinces": 8.0,
+    "abbreviations/months": 7.0,
+    "proper-names/districts": 6.0,
+    "proper-names/countries": 6.0,
+    "transit/stations": 6.0,
+    "proper-names/organizations": 5.0,
+    "proper-names/landmarks": 5.0,
+    "proper-names/persons": 5.0,
+    "education/universities": 5.0,
+    # Tier 2: Core News Compounds & Abbreviations
+    "news/compounds": 4.5,
+    "news/connectives": 4.0,
+    "news/royal": 4.0,
+    "abbreviations/ranks": 5.0,
+    "abbreviations/titles": 5.0,
+    "abbreviations/addresses": 5.0,
+    "abbreviations/units": 4.0,
+    "abbreviations/common": 4.0,
+    "politics/parties": 4.0,
+    "transit/roads": 4.5,
+    # Tier 3: Domains & Technical Loanwords
+    "domains/medical": 3.5,
+    "domains/finance": 3.5,
+    "domains/legal": 3.5,
+    "education/schools": 3.5,
+    "politics/society": 3.0,
+    "culture/beliefs": 3.0,
+    "culture/traditions": 3.0,
+    "automotive/vehicles": 3.0,
+    "environment/esg": 3.0,
+    "loanwords/tech": 3.0,
+    "loanwords/food": 3.0,
+    "proper-names/brands": 3.5,
+    # Tier 4: Pop-Culture & Slang
+    "loanwords/general": 2.5,
+    "pop-culture/gaming": 2.5,
+    "pop-culture/anime-manga": 2.5,
+    "slang/internet": 1.5,
+    # Tier 5: Common Misspellings (Low weight to prioritize correct spellings)
+    "misspellings/common": 0.5,
+}
+
+CATEGORY_DEFAULT_WEIGHTS = {
+    "proper-names": 5.0,
+    "abbreviations": 4.5,
+    "news": 4.0,
+    "transit": 4.5,
+    "education": 4.0,
+    "domains": 3.5,
+    "politics": 3.0,
+    "culture": 3.0,
+    "automotive": 3.0,
+    "environment": 3.0,
+    "loanwords": 2.8,
+    "pop-culture": 2.5,
+    "slang": 1.5,
+    "misspellings": 0.5,
+}
+
+
+def get_tier_weight(category: str, stem: str) -> float:
+    key = f"{category}/{stem}"
+    if key in DEFAULT_TIER_WEIGHTS:
+        return DEFAULT_TIER_WEIGHTS[key]
+    return CATEGORY_DEFAULT_WEIGHTS.get(category, 2.0)
+
+
+def compute_word_weight(word: str, base_weight: float) -> float:
+    """
+    Applies length bias for long multi-syllable compound words (length >= 5 chars).
+    """
+    if base_weight >= 2.0 and len(word) >= 5:
+        length_bonus = min(1.5, 0.1 * (len(word) - 4))
+        return round(base_weight + length_bonus, 2)
+    return round(base_weight, 2)
 
 
 def load_words_from_file(filepath: Path) -> set[str]:
@@ -34,6 +115,78 @@ def thai_sort_key(word: str):
     return word
 
 
+def build_dawg_from_words(words: list[str], output_path: str):
+    """
+    Compile a sorted unique wordlist into a Minimal DAWG (TBD1 format).
+    """
+    words = sorted(list(set(words)))
+
+    class Node:
+        __slots__ = ("edges", "is_final", "id")
+        def __init__(self):
+            self.edges = {}
+            self.is_final = False
+            self.id = 0
+
+    root = Node()
+    for w in words:
+        curr = root
+        for ch in w:
+            if ch not in curr.edges:
+                curr.edges[ch] = Node()
+            curr = curr.edges[ch]
+        curr.is_final = True
+
+    # Bottom-up minimization (Daciuk's algorithm)
+    node_signatures = {}
+    def minimize(node):
+        for ch, child in list(node.edges.items()):
+            node.edges[ch] = minimize(child)
+        sig = (node.is_final, tuple(sorted((ch, id(child)) for ch, child in node.edges.items())))
+        if sig in node_signatures:
+            return node_signatures[sig]
+        node_signatures[sig] = node
+        return node
+
+    min_root = minimize(root)
+
+    # Breadth-first traversal to assign contiguous state IDs (root = 0)
+    states = [min_root]
+    min_root.id = 0
+    visited = {id(min_root)}
+
+    queue = [min_root]
+    while queue:
+        curr = queue.pop(0)
+        for ch, child in sorted(curr.edges.items()):
+            if id(child) not in visited:
+                child.id = len(states)
+                visited.add(id(child))
+                states.append(child)
+                queue.append(child)
+
+    buf = bytearray()
+    buf.extend(b"TBD1")
+    buf.extend(struct.pack("<II", len(states), len(words)))
+
+    for s in states:
+        is_final_bit = 0x80 if s.is_final else 0
+        num_edges = len(s.edges)
+        assert num_edges < 128, f"Too many edges in state {s.id}"
+        buf.append(is_final_bit | num_edges)
+        for ch, child in sorted(s.edges.items()):
+            code = ord(ch)
+            assert code <= 0xFFFF, f"Character {ch} exceeds uint16 BMP"
+            buf.extend(struct.pack("<HH", code, child.id))
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    with open(output_path, "wb") as f:
+        f.write(buf)
+
+    out_size = len(buf)
+    print(f"✓ Compiled binary DAWG: {output_path} ({out_size:,} bytes, {out_size/1024:.2f} KB)")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Build and merge thai-break-dict-extra dictionary.")
     parser.add_argument(
@@ -52,7 +205,7 @@ def main():
         "--base-dict",
         type=Path,
         default=None,
-        help="Optional path to base dictionary (e.g. ../thai-break-service/data/words.txt)",
+        help="Optional path to base dictionary (e.g. ../thai-break/data/words.txt)",
     )
     parser.add_argument(
         "--include",
@@ -67,6 +220,12 @@ def main():
         help="Comma-separated category names to exclude (e.g. 'misspellings,slang')",
     )
     parser.add_argument(
+        "--weights-mode",
+        choices=["tier", "uniform"],
+        default="tier",
+        help="Weight calculation mode: 'tier' (linguistic category tiers) or 'uniform' (all 1.0)",
+    )
+    parser.add_argument(
         "--merged-output",
         type=Path,
         default=None,
@@ -77,6 +236,12 @@ def main():
         choices=["codepoint", "thai"],
         default="codepoint",
         help="Sorting method: 'codepoint' (matching standard binary search/Rust UTF-8 order) or 'thai'",
+    )
+    parser.add_argument(
+        "--compile-dawg",
+        action="store_true",
+        default=True,
+        help="Automatically compile binary DAWG (.dawg) into dist/ (default: True)",
     )
 
     args = parser.parse_args()
@@ -106,27 +271,37 @@ def main():
         )
         if not matches_include or matches_exclude:
             continue
-        filtered_files.append((fp, category))
+        filtered_files.append((fp, category, fp.stem))
 
     if not filtered_files:
         print("Error: No dictionary files matched the specified filter criteria.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"📦 Building extra dictionary from {len(filtered_files)} file(s) in {data_dir}...")
+    print(f"📦 Building extra dictionary from {len(filtered_files)} file(s) in {data_dir} (Weights: {args.weights_mode})...")
 
     category_stats = defaultdict(lambda: {"files": 0, "words": set()})
-    all_extra_words = set()
+    word_weights: dict[str, float] = {}
 
-    for file_path, category in filtered_files:
+    for file_path, category, stem in filtered_files:
         words = load_words_from_file(file_path)
         category_stats[category]["files"] += 1
         category_stats[category]["words"].update(words)
-        all_extra_words.update(words)
+
+        base_tier_weight = get_tier_weight(category, stem) if args.weights_mode == "tier" else 1.0
+
+        for w in words:
+            w_weight = compute_word_weight(w, base_tier_weight) if args.weights_mode == "tier" else 1.0
+            # Keep the highest weight if word appears in multiple categories
+            if w not in word_weights or w_weight > word_weights[w]:
+                word_weights[w] = w_weight
+
+    all_extra_words = set(word_weights.keys())
 
     # Print breakdown per category
     print("\n--- Category Breakdown ---")
     for category, stats in sorted(category_stats.items()):
-        print(f"  • {category:<15} : {len(stats['words']):>6} words ({stats['files']} file(s))")
+        tier_w = CATEGORY_DEFAULT_WEIGHTS.get(category, 1.0) if args.weights_mode == "tier" else 1.0
+        print(f"  • {category:<15} : {len(stats['words']):>6} words ({stats['files']} file(s), Tier weight ~{tier_w})")
     print("--------------------------")
     print(f"Total Unique Extra Words : {len(all_extra_words):>6}\n")
 
@@ -136,13 +311,24 @@ def main():
     else:
         sorted_extra = sorted(all_extra_words)
 
-    # Write extra output
+    # 1. Write plain text wordlist (.txt)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with open(args.output, "w", encoding="utf-8", newline="\n") as f:
         for word in sorted_extra:
             f.write(f"{word}\n")
+    print(f"✓ Saved plain text dictionary: {args.output} ({len(sorted_extra)} words)")
 
-    print(f"✓ Saved extra dictionary to: {args.output} ({len(sorted_extra)} words)")
+    # 2. Write weighted TSV dictionary (.tsv)
+    tsv_output = args.output.with_suffix(".tsv")
+    with open(tsv_output, "w", encoding="utf-8", newline="\n") as f:
+        for word in sorted_extra:
+            f.write(f"{word}\t{word_weights[word]:.2f}\n")
+    print(f"✓ Saved weighted TSV dictionary: {tsv_output} ({len(sorted_extra)} words)")
+
+    # 3. Compile binary DAWG (.dawg)
+    if args.compile_dawg:
+        dawg_output = args.output.with_suffix(".dawg")
+        build_dawg_from_words(sorted_extra, str(dawg_output))
 
     # Compare / Merge with base dictionary if provided
     if args.base_dict:
@@ -169,7 +355,15 @@ def main():
                 with open(args.merged_output, "w", encoding="utf-8", newline="\n") as f:
                     for word in sorted_merged:
                         f.write(f"{word}\n")
-                print(f"✓ Saved merged dictionary to: {args.merged_output} ({len(sorted_merged)} words)")
+                print(f"✓ Saved merged dictionary: {args.merged_output} ({len(sorted_merged)} words)")
+
+                # Also save merged TSV
+                merged_tsv = args.merged_output.with_suffix(".tsv")
+                with open(merged_tsv, "w", encoding="utf-8", newline="\n") as f:
+                    for word in sorted_merged:
+                        w_val = word_weights.get(word, 1.0)
+                        f.write(f"{word}\t{w_val:.2f}\n")
+                print(f"✓ Saved merged TSV dictionary: {merged_tsv} ({len(sorted_merged)} words)")
 
     print("\n🎉 Build completed successfully!")
 
