@@ -187,6 +187,35 @@ def build_dawg_from_words(words: list[str], output_path: str):
     print(f"✓ Compiled binary DAWG: {output_path} ({out_size:,} bytes, {out_size/1024:.2f} KB)")
 
 
+def compile_fst_if_available(tsv_path: Path, fst_path: Path) -> bool:
+    """
+    Compiles a weighted TSV dictionary into BurntSushi FST v3 format using thaibreak_compile_fst.
+    """
+    import shutil
+    import subprocess
+
+    candidates = [
+        "thaibreak_compile_fst",
+        str(Path(__file__).resolve().parent.parent.parent / "thai-break" / "rust" / "target" / "release" / "thaibreak_compile_fst"),
+        str(Path(__file__).resolve().parent.parent.parent / "PHPThaiNLP" / "rust" / "target" / "release" / "thaibreak_compile_fst"),
+    ]
+    compiler = None
+    for c in candidates:
+        if shutil.which(c) or (Path(c).is_file() and os.access(c, os.X_OK)):
+            compiler = c
+            break
+
+    if compiler:
+        try:
+            res = subprocess.run([compiler, str(tsv_path), str(fst_path)], capture_output=True, text=True, check=True)
+            out_size = fst_path.stat().st_size
+            print(f"✓ Compiled binary FST : {fst_path} ({out_size:,} bytes, {out_size/1024:.2f} KB)")
+            return True
+        except Exception as e:
+            print(f"Warning: Failed to compile FST: {e}", file=sys.stderr)
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Build and merge thai-break-dict-extra dictionary.")
     parser.add_argument(
@@ -242,6 +271,12 @@ def main():
         action="store_true",
         default=True,
         help="Automatically compile binary DAWG (.dawg) into dist/ (default: True)",
+    )
+    parser.add_argument(
+        "--compile-fst",
+        action="store_true",
+        default=True,
+        help="Automatically compile binary FST (.fst) if thaibreak_compile_fst is available (default: True)",
     )
 
     args = parser.parse_args()
@@ -329,6 +364,11 @@ def main():
     if args.compile_dawg:
         dawg_output = args.output.with_suffix(".dawg")
         build_dawg_from_words(sorted_extra, str(dawg_output))
+
+    # 4. Compile binary FST (.fst)
+    if args.compile_fst:
+        fst_output = args.output.with_suffix(".fst")
+        compile_fst_if_available(tsv_output, fst_output)
 
     # Compare / Merge with base dictionary if provided
     if args.base_dict:
