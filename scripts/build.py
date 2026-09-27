@@ -403,6 +403,36 @@ def main():
         fst_output = args.output.with_suffix(".fst")
         compile_fst_if_available(tsv_output, fst_output)
 
+    # 5. Automatically build lines layout preset for thai-break-service
+    # (excludes proper-names, education, news compounds to allow flexible line wrapping)
+    if args.output == Path("dist/words-extra.txt") and not args.include and not args.exclude:
+        lines_output = args.output.parent / "words-extra-lines.txt"
+        lines_tsv = args.output.parent / "words-extra-lines.tsv"
+        lines_dawg = args.output.parent / "words-extra-lines.dawg"
+        lines_fst = args.output.parent / "words-extra-lines.fst"
+
+        excluded_for_lines = {"proper-names", "education", "news"}
+        lines_words = {}
+        for file_path, category, stem in filtered_files:
+            if category in excluded_for_lines:
+                continue
+            for w in load_words_from_file(file_path):
+                if w not in lines_words or word_weights[w] > lines_words[w]:
+                    lines_words[w] = word_weights[w]
+
+        sorted_lines = sorted(lines_words.keys(), key=thai_sort_key if args.sort_method == "thai" else lambda x: x)
+        with open(lines_output, "w", encoding="utf-8", newline="\n") as f:
+            for w in sorted_lines:
+                f.write(f"{w}\n")
+        with open(lines_tsv, "w", encoding="utf-8", newline="\n") as f:
+            for w in sorted_lines:
+                f.write(f"{w}\t{lines_words[w]:.2f}\n")
+        if args.compile_dawg:
+            build_dawg_from_words(sorted_lines, str(lines_dawg))
+        if args.compile_fst:
+            compile_fst_if_available(lines_tsv, lines_fst)
+        print(f"✓ Automatically generated lines layout preset: {lines_output} ({len(sorted_lines)} words)")
+
     # Compare / Merge with base dictionary if provided
     if args.base_dict:
         if not args.base_dict.exists():
