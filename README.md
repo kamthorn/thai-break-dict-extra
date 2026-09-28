@@ -150,6 +150,11 @@ python3 scripts/harvest_wisesight_vocab.py
 # กลั่นกรองผล harvest: คำสั้น Wisesight -> slang/internet.txt, คำทั่วไป Thai2fit -> general/thai2fit.txt
 # (คำลากเสียง/เสียงหัวเราะ เช่น งื้อออ ถถถ จะถูกย้ายไป misspellings/common.txt อัตโนมัติ)
 python3 scripts/curate_harvest.py [--dry-run]
+
+# สกัด bigram จากตัวอย่างที่คนตัดคำไว้แล้วใน Wisesight (CC0-1.0, human-tokenized)
+# -> data/bigrams-wisesight.tsv (commit ได้ ปลอดภัยลิขสิทธิ์)
+# ส่วน bigram จาก LST20 ให้ใช้ scripts/harvest_bigrams_lst20.py ซึ่งเขียนลง local/ เท่านั้น
+python3 scripts/harvest_bigrams_wisesight.py [--min-count 2]
 ```
 
 > [!NOTE]
@@ -244,6 +249,7 @@ python3 -m unittest discover tests
 |---|---|---|---|
 | PyThaiNLP `words_th_thai2fit_201810.txt` | `general/thai2fit.txt` | CC0-1.0 | PyThaiNLP `corpus_license.md` |
 | Wisesight Sentiment (26,737 ข้อความโซเชียล) | `slang/internet.txt` (รอบท review) | CC0-1.0 | Suriyawongkul et al., Zenodo 10.5281/zenodo.3457446 |
+| Wisesight word-tokenization (1,153 ประโยคคนตัด) | `data/bigrams-wisesight.tsv` (3,868 คู่) | CC0-1.0 | โฟลเดอร์ word-tokenization ใน repo เดียวกัน |
 | PyThaiNLP `countries_th.txt`, `th_en_transliteration` | `proper-names/countries.txt`, `loanwords/*.txt` | CC0-1.0 | PyThaiNLP `corpus_license.md` |
 | thailand-geography-json (Joe Takara) | `proper-names/{provinces,districts,subdistricts}.txt` | MIT © 2023-Present Joe Takara | https://github.com/thailand-geography-data/thailand-geography-json |
 | วิกิพีเดียภาษาไทย | ชื่อเฉพาะ/องค์กร/สถานที่ | CC BY-SA 4.0 | ลิงก์บทความต้นทาง |
