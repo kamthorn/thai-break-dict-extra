@@ -196,6 +196,25 @@ python3 scripts/extract_vocab.py --corpus lst20 --corpus-dir ../LST20_Corpus/tra
 
 ---
 
+### 7. การกลั่นกรองคำศัพท์และตรวจสอบน้ำหนัก (`curate_thai2fit.py`, `audit_weights.py`)
+
+```bash
+# กลั่นกรอง general/thai2fit.txt: ย้ายคำสะกดผิด -> misspellings (0.5),
+# ลบวลีไวยากรณ์ (ไปกินกัน, ไม่ชอบ) ที่ประกอบจาก base ได้, ย้ายคำหยาบ -> slang
+# (กฎวลี: แยกเป็นคำ base ได้ >= 2 คำ มี function word และไม่ปรากฏใน words_th (CC0))
+python3 scripts/curate_thai2fit.py --dry-run   # ทบทวนก่อน
+python3 scripts/curate_thai2fit.py             # ประยุกต์ใช้
+
+# ตรวจสุขอนามัย TSV, guardrails ใน artifact, ความตรงกันของ txt/tsv/dawg,
+# และ parity probe (weighted TSV vs uniform TXT ผ่าน PHP engine)
+python3 scripts/audit_weights.py [--skip-php]
+```
+
+> [!NOTE]
+> ภายใต้ต้นทุน unigram แบบ `-log(weight/total)` จำนวนคำในเส้นทางมีอิทธิพลเหนือน้ำหนักมาก
+> (วัดจริง: weighted vs uniform ให้ผลตรงกัน 10/10 probes, 2000/2000 คู่สุ่ม, 300/300 ข้อความกำกวม)
+> คุณภาพการตัดคำจึงขึ้นกับ **ชุดคำ (curation)** เป็นหลัก ไม่ใช่น้ำหนัก — DAWG ไม่เก็บน้ำหนักอยู่แล้วโดยออกแบบ
+
 ## 🧪 การรันชุดทดสอบ (Unit Tests)
 
 ```bash
