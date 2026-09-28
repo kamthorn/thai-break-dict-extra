@@ -21,6 +21,7 @@ DEFAULT_TIER_WEIGHTS = {
     "proper-names/provinces": 8.0,
     "abbreviations/months": 7.0,
     "proper-names/districts": 6.0,
+    "proper-names/subdistricts": 5.5,
     "proper-names/countries": 6.0,
     "transit/stations": 6.0,
     "proper-names/organizations": 5.0,
@@ -58,6 +59,8 @@ DEFAULT_TIER_WEIGHTS = {
     "slang/internet": 1.5,
     # Tier 5: Common Misspellings (Low weight to prioritize correct spellings)
     "misspellings/common": 0.5,
+    # Tier 3.5: General extended vocabulary (Thai2fit, general corpus)
+    "general/thai2fit": 2.0,
 }
 
 CATEGORY_DEFAULT_WEIGHTS = {
@@ -74,6 +77,7 @@ CATEGORY_DEFAULT_WEIGHTS = {
     "loanwords": 2.8,
     "pop-culture": 2.5,
     "slang": 1.5,
+    "general": 2.0,
     "misspellings": 0.5,
 }
 

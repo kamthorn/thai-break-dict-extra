@@ -146,20 +146,41 @@ def command_segmenter(command: str, dict_path: Path) -> Segmenter:
 
 
 def merged_dictionary(paths: list[Path]) -> tuple[Path, set[str]]:
-    """Merge word lists (first column of TSV lines) into a temporary file."""
+    """Merge word lists into a temporary file, preserving TSV weights when present.
+
+    If any input line carries a weight column (word<TAB>weight), the merged
+    output is a .tsv (default weight 1.0 for plain word lines) so that
+    weight-aware segmenters (e.g. tools/segment.php, which picks fromTsvFile
+    for .tsv) score paths with tier weights instead of uniform costs.
+    """
     if len(paths) == 1:
         words = {line.split("\t")[0].strip() for line in paths[0].read_text(encoding="utf-8").splitlines()}
         return paths[0], {w for w in words if w and not w.startswith("#")}
-    lines: dict[str, str] = {}
+    words: dict[str, float] = {}
     for path in paths:
         for line in path.read_text(encoding="utf-8").splitlines():
-            word = line.split("\t")[0].strip()
-            if word and not word.startswith("#"):
-                lines.setdefault(word, line.strip())
-    tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
-    tmp.write("\n".join(lines.values()) + "\n")
+            parts = line.split("\t")
+            word = parts[0].strip()
+            if not word or word.startswith("#"):
+                continue
+            weight = 1.0
+            if len(parts) > 1:
+                try:
+                    weight = float(parts[1].strip())
+                except ValueError:
+                    pass
+            # First file wins on duplicates (base dictionary takes precedence)
+            if word not in words:
+                words[word] = weight
+    has_weights = any(w != 1.0 for w in words.values())
+    suffix = ".tsv" if has_weights else ".txt"
+    tmp = tempfile.NamedTemporaryFile("w", suffix=suffix, delete=False, encoding="utf-8")
+    if has_weights:
+        tmp.write("".join(f"{w}\t{wt:.2f}\n" for w, wt in words.items()))
+    else:
+        tmp.write("\n".join(words) + "\n")
     tmp.close()
-    return Path(tmp.name), set(lines)
+    return Path(tmp.name), set(words)
 
 
 def load_chunks(args: argparse.Namespace) -> list[list[str]]:
