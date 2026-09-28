@@ -20,6 +20,10 @@ DEFAULT_TIER_WEIGHTS = {
     # Tier 1: Fixed Proper Names, Countries & Months (Weight 6.0 - 8.0)
     "proper-names/provinces": 8.0,
     "abbreviations/months": 7.0,
+    # Dotless month abbrevs (มค, มีค, ...): hijack ordinary text by word-count
+    # advantage (มีค in มีความเสี่ยง), so pin at 0.5 -- they still match literal
+    # dates (5 มีค 2567) but always lose to base-word paths.
+    "abbreviations/months-dotless": 0.5,
     "proper-names/districts": 6.0,
     "proper-names/subdistricts": 5.5,
     "proper-names/countries": 6.0,
