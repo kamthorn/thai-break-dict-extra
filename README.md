@@ -10,13 +10,14 @@
 
 ## 📁 โครงสร้างหมวดหมู่คำศัพท์ (`data/`)
 
-จัดหมวดหมู่แบบแยกโฟลเดอร์ 13 หมวดหมู่ รวม 26 ไฟล์คำศัพท์:
+จัดหมวดหมู่แบบแยกโฟลเดอร์ 15 หมวดหมู่ รวม 38 ไฟล์คำศัพท์:
 
 ```text
 data/
 ├── proper-names/             # ชื่อเฉพาะ (Proper Names / Named Entities)
 │   ├── provinces.txt         # รายชื่อ 77 จังหวัด และชื่อเรียกยอดนิยม (เช่น กรุงเทพฯ, อยุธยา, โคราช)
 │   ├── districts.txt         # อำเภอ, เขต, แขวง, ตำบล, แหล่งท่องเที่ยวสำคัญ
+│   ├── subdistricts.txt        # ตำบล/แขวงทั่วประเทศ (สกัดจาก thailand-geography-json, MIT)
 │   ├── countries.txt         # ชื่อประเทศ, ดินแดน และเมืองสำคัญทั่วโลก (ภาษาไทย)
 │   ├── organizations.txt     # หน่วยงานราชการ, กระทรวง, กรม, องค์กรสากล, ธนาคาร
 │   ├── brands.txt            # แบรนด์สินค้า, บริษัท, แพลตฟอร์มโซเชียล, ห้างสรรพสินค้า
@@ -61,6 +62,9 @@ data/
 │
 ├── environment/              # สิ่งแวดล้อมและความยั่งยืน (ESG)
 │   └── esg.txt               # คาร์บอนเครดิต, พลังงานสะอาด, โซลาร์เซลล์, ปัญหาฝุ่นละออง
+│
+├── general/                  # ศัพท์ทั่วไปเพิ่มเติม (Tier 3.5, weight 2.0)
+│   └── thai2fit.txt          # ศัพท์ภาษาไทยทั่วไปจาก Thai2fit (PyThaiNLP, CC0-1.0)
 │
 ├── loanwords/                # คำทับศัพท์ / คำยืมภาษาต่างประเทศ
 │   ├── tech.txt              # ศัพท์คอมพิวเตอร์, เทคโนโลยี, ซอฟต์แวร์, AI
@@ -128,12 +132,29 @@ python3 scripts/build.py --base-dict ../thai-break/data/words.txt
 โปรเจกต์นี้มีสคริปต์สกัดคำศัพท์จากแหล่งข้อมูลสาธารณะที่ถูกกฎหมายลิขสิทธิ์ 100%:
 
 ```bash
-# สกัดเขตและอำเภอทางการทั่วประเทศ (930 อำเภอ) จากข้อมูลเปิดกรมการปกครอง (DOPA)
+# สกัดจังหวัด/อำเภอ/ตำบลทางการทั่วประเทศ จากข้อมูลเปิด thailand-geography-json (MIT)
+# -> data/proper-names/{provinces,districts,subdistricts}.txt
 python3 scripts/harvest_geodata.py
 
 # สกัดชื่อเฉพาะ มหาวิทยาลัย โรงเรียน ทางหลวง องค์กร จากฐานข้อมูลเปิดของวิกิพีเดียไทย (CC BY-SA 4.0)
 python3 scripts/harvest_wikipedia_titles.py
+
+# สกัดชื่อประเทศ คำทับศัพท์ และศัพท์กฎหมาย จาก PyThaiNLP corpus (CC0-1.0) และประมวลกฎหมาย (Public Domain)
+# -> data/proper-names/countries.txt, data/loanwords/*.txt, data/domains/legal.txt
+python3 scripts/harvest_pythainlp_cc0.py
+
+# สกัดคำสแลง/ศัพท์โซเชียลจาก Wisesight Sentiment (CC0-1.0) และคำใหม่จาก Thai2fit (CC0-1.0)
+# -> data/slang/internet_new.txt (ไฟล์พักรอตรวจทานด้วยคนก่อน merge ทุกครั้ง)
+python3 scripts/harvest_wisesight_vocab.py
+
+# กลั่นกรองผล harvest: คำสั้น Wisesight -> slang/internet.txt, คำทั่วไป Thai2fit -> general/thai2fit.txt
+# (คำลากเสียง/เสียงหัวเราะ เช่น งื้อออ ถถถ จะถูกย้ายไป misspellings/common.txt อัตโนมัติ)
+python3 scripts/curate_harvest.py [--dry-run]
 ```
+
+> [!NOTE]
+> `data/slang/internet_new.txt` เป็นไฟล์พักชั่วคราวสำหรับตรวจทาน **ห้าม merge เข้า build โดยตรง**
+> (build.py จะหยิบ `.txt` ทุกไฟล์ใน `data/` ไปรวม) — ตรวจทานแล้วลบทิ้งหลัง curate เสมอ
 
 ### 5. วัดความแม่นยำการตัดคำ (`benchmark.py`)
 
@@ -195,6 +216,20 @@ python3 -m unittest discover tests
    ```
 
 ---
+
+---
+
+## 📚 ที่มาของข้อมูลและสัญญาอนุญาต (Data Sources & Licenses)
+
+| แหล่งข้อมูล | ใช้ทำอะไร | สัญญาอนุญาต | การอ้างอิง |
+|---|---|---|---|
+| PyThaiNLP `words_th_thai2fit_201810.txt` | `general/thai2fit.txt` | CC0-1.0 | PyThaiNLP `corpus_license.md` |
+| Wisesight Sentiment (26,737 ข้อความโซเชียล) | `slang/internet.txt` (รอบท review) | CC0-1.0 | Suriyawongkul et al., Zenodo 10.5281/zenodo.3457446 |
+| PyThaiNLP `countries_th.txt`, `th_en_transliteration` | `proper-names/countries.txt`, `loanwords/*.txt` | CC0-1.0 | PyThaiNLP `corpus_license.md` |
+| thailand-geography-json (Joe Takara) | `proper-names/{provinces,districts,subdistricts}.txt` | MIT © 2023-Present Joe Takara | https://github.com/thailand-geography-data/thailand-geography-json |
+| วิกิพีเดียภาษาไทย | ชื่อเฉพาะ/องค์กร/สถานที่ | CC BY-SA 4.0 | ลิงก์บทความต้นทาง |
+| ประมวลกฎหมายไทย | `domains/legal.txt` | Public Domain (ม.7 พ.ร.บ.ลิขสิทธิ์) | — |
+| LST20 / Blackboard Treebank | ทดสอบใน `local/` และสกัดสถิติ bigram ไว้ใช้ภายในเท่านั้น | NECTEC Data Agreement — **ห้าม commit ลง `data/`/`dist/`** จนกว่าเจ้าของจะอนุญาต | อ้างอิง technical report ของ NECTEC เมื่อใช้งาน |
 
 ## 📜 สัญญาอนุญาต (License)
 
