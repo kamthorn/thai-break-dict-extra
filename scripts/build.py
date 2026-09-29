@@ -31,6 +31,11 @@ DEFAULT_TIER_WEIGHTS = {
     "proper-names/organizations": 5.0,
     "proper-names/landmarks": 5.0,
     "proper-names/persons": 5.0,
+    # Given names only (first name, no surname) — kept low relative to
+    # proper-names/persons (full name phrases): a plain dictionary word
+    # already always beats a 2-word decomposition once it's listed at all
+    # (1 edge vs. 2 in the Viterbi cost graph), so this only needs to clear
+    # 1.0; kept at the short-word guardrail ceiling to avoid any length bonus.
     "education/universities": 5.0,
     # Tier 2: Core News Compounds & Abbreviations
     "news/compounds": 4.5,
