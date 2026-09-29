@@ -10,7 +10,7 @@
 
 ## 📁 โครงสร้างหมวดหมู่คำศัพท์ (`data/`)
 
-จัดหมวดหมู่แบบแยกโฟลเดอร์ 15 หมวดหมู่ รวม 38 ไฟล์คำศัพท์:
+จัดหมวดหมู่แบบแยกโฟลเดอร์ 15 หมวดหมู่ รวม 39 ไฟล์คำศัพท์:
 
 ```text
 data/
@@ -21,7 +21,8 @@ data/
 │   ├── countries.txt         # ชื่อประเทศ, ดินแดน และเมืองสำคัญทั่วโลก (ภาษาไทย)
 │   ├── organizations.txt     # หน่วยงานราชการ, กระทรวง, กรม, องค์กรสากล, ธนาคาร
 │   ├── brands.txt            # แบรนด์สินค้า, บริษัท, แพลตฟอร์มโซเชียล, ห้างสรรพสินค้า
-│   ├── persons.txt           # ชื่อบุคคลสำคัญ, บุคคลสาธารณะ
+│   ├── persons.txt           # ชื่อบุคคลสำคัญ, บุคคลสาธารณะ (ชื่อ-นามสกุลเต็ม)
+│   ├── given-names.txt       # ชื่อตัวคนไทยทั่วไป (PyThaiNLP CC0/Apache-2.0, คัดกรองด้วย LST20)
 │   └── landmarks.txt         # โบราณสถาน, วัดสำคัญ, แหล่งท่องเที่ยว, สถานที่ราชการสำคัญ
 │
 ├── news/                     # ภาษาข่าวและสื่อสารมวลชน (คำประสมและคำเชื่อมที่พบบ่อยในสำนักข่าว)
@@ -143,6 +144,11 @@ python3 scripts/harvest_wikipedia_titles.py
 # สกัดชื่อประเทศ คำทับศัพท์ และศัพท์กฎหมาย จาก PyThaiNLP corpus (CC0-1.0) และประมวลกฎหมาย (Public Domain)
 # -> data/proper-names/countries.txt, data/loanwords/*.txt, data/domains/legal.txt
 python3 scripts/harvest_pythainlp_cc0.py
+
+# สกัดชื่อตัวคนไทยจาก PyThaiNLP (CC0/Apache-2.0) คัดเฉพาะชื่อที่ไม่ชนกับวลีธรรมดา
+# (ตรวจด้วยความถี่ใน LST20 นอกช่วงชื่อคน — ใช้แค่ตัดสินใจว่าเก็บคำไหน ไม่คัดลอกข้อความ LST20 ลง data/)
+# -> data/proper-names/given-names.txt
+python3 scripts/harvest_given_names.py [--lst20 ../LST20_Corpus]
 
 # สกัดคำสแลง/ศัพท์โซเชียลจาก Wisesight Sentiment (CC0-1.0) และคำใหม่จาก Thai2fit (CC0-1.0)
 # -> data/slang/internet_new.txt (ไฟล์พักรอตรวจทานด้วยคนก่อน merge ทุกครั้ง)
