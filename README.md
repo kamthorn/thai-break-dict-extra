@@ -12,7 +12,7 @@
 
 ## 📁 โครงสร้างหมวดหมู่คำศัพท์ (`data/`)
 
-จัดหมวดหมู่แบบแยกโฟลเดอร์ 15 หมวดหมู่ รวม 39 ไฟล์คำศัพท์:
+จัดหมวดหมู่แบบแยกโฟลเดอร์ 15 หมวดหมู่ รวม 40 ไฟล์คำศัพท์ (28,184 คำหลังรวมและตัดซ้ำ):
 
 ```text
 data/
@@ -110,11 +110,12 @@ python3 scripts/validate.py
 ```
 
 ### 3. การรวมคำศัพท์และการสร้างพจนานุกรม (`build.py`)
-รวบรวมคำศัพท์จากหมวดหมู่ที่ต้องการ คำนวณค่าน้ำหนักตาม Tier หมวดหมู่ และส่งออกเป็น 4 รูปแบบพร้อมกันใน `dist/`:
-- `dist/words-extra.txt`: รายการคำเรียงตามตัวอักษร (1 คำต่อบรรทัด)
+รวบรวมคำศัพท์จากหมวดหมู่ที่ต้องการ คำนวณค่าน้ำหนักตาม Tier หมวดหมู่ และส่งออกเป็น 4 รูปแบบพร้อมกันใน `dist/` (พร้อมชุด Lines preset ที่สร้างอัตโนมัติ):
+- `dist/words-extra.txt`: รายการคำเรียงตามตัวอักษร (1 คำต่อบรรทัด, 28,184 คำ)
 - `dist/words-extra.tsv`: คำศัพท์พร้อมค่าน้ำหนักภาษาศาสตร์ (Tier Weights 0.5 - 8.0)
-- `dist/words-extra.dawg`: พจนานุกรมไบนารีคอมแพกต์ Minimal DAWG ขนาดเล็กพิเศษ (~125 KB) สำหรับ Go, TypeScript, PHP
-- `dist/words-extra.fst`: พจนานุกรมไบนารี Finite State Transducer (~255 KB) สำหรับ Rust, C/C++, Python (C-FFI) รองรับ zero-copy mmap
+- `dist/words-extra.dawg`: พจนานุกรมไบนารีคอมแพกต์ Minimal DAWG (~271 KB) สำหรับ Go, TypeScript, PHP
+- `dist/words-extra.fst`: พจนานุกรมไบนารี Finite State Transducer (~688 KB) สำหรับ Rust, C/C++, Python (C-FFI) รองรับ zero-copy mmap
+- `dist/words-extra-lines.{txt,tsv,dawg,fst}`: ชุดคำสำหรับโหมดจัดบรรทัด (ตัดชื่อเฉพาะ/โรงเรียน/คำประสมข่าวออก, 9,218 คำ) สร้างอัตโนมัติเมื่อ build แบบ default
 
 ```bash
 # 1. รวมคำศัพท์พิเศษทั้งหมดพร้อมคำนวณค่าน้ำหนัก (ค่าเริ่มต้น)
@@ -158,6 +159,11 @@ python3 scripts/curate_harvest.py [--dry-run]
 # -> data/bigrams-wisesight.tsv (commit ได้ ปลอดภัยลิขสิทธิ์)
 # ส่วน bigram จาก LST20 ให้ใช้ scripts/harvest_bigrams_lst20.py ซึ่งเขียนลง local/ เท่านั้น
 python3 scripts/harvest_bigrams_wisesight.py [--min-count 2]
+
+# สกัด bigram คุณภาพสูงจากคลังข่าว Prachathai-67k (Apache-2.0, 54,380 บทความ)
+# -> data/bigrams-prachathai.tsv (955,967 คู่คำ; commit ได้ ปลอดภัยลิขสิทธิ์)
+# ใช้ segmenter ของ ThaiBreak ตัดคำแล้วนับคู่คำติดกัน (bootstrapping)
+python3 scripts/harvest_bigrams_prachathai.py [--min-count 5]
 ```
 
 > [!NOTE]
@@ -253,6 +259,7 @@ python3 -m unittest discover tests
 | PyThaiNLP `words_th_thai2fit_201810.txt` | `general/thai2fit.txt` | CC0-1.0 | PyThaiNLP `corpus_license.md` |
 | Wisesight Sentiment (26,737 ข้อความโซเชียล) | `slang/internet.txt` (รอบท review) | CC0-1.0 | Suriyawongkul et al., Zenodo 10.5281/zenodo.3457446 |
 | Wisesight word-tokenization (1,153 ประโยคคนตัด) | `data/bigrams-wisesight.tsv` (3,868 คู่) | CC0-1.0 | โฟลเดอร์ word-tokenization ใน repo เดียวกัน |
+| Prachathai-67k (54,380 บทความข่าว) | `data/bigrams-prachathai.tsv` (955,967 คู่คำ) | Apache-2.0 | wannaphong/prachathai67k (HuggingFace) |
 | PyThaiNLP `countries_th.txt`, `th_en_transliteration` | `proper-names/countries.txt`, `loanwords/*.txt` | CC0-1.0 | PyThaiNLP `corpus_license.md` |
 | thailand-geography-json (Joe Takara) | `proper-names/{provinces,districts,subdistricts}.txt` | MIT © 2023-Present Joe Takara | https://github.com/thailand-geography-data/thailand-geography-json |
 | วิกิพีเดียภาษาไทย | ชื่อเฉพาะ/องค์กร/สถานที่ | CC BY-SA 4.0 | ลิงก์บทความต้นทาง |
