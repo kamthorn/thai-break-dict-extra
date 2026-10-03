@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 from format import clean_and_format_file
-from validate import validate_file
+from validate import thai_spelling_problem, validate_file
 from build import load_words_from_file, thai_sort_key
 
 
@@ -43,6 +43,15 @@ class TestDictScripts(unittest.TestCase):
             # Validate again - should have 0 errors now
             errors_after = validate_file(test_file)
             self.assertEqual(errors_after, [])
+
+    def test_thai_spelling_problem(self):
+        for word in ["กระท\u0e4d\u0e32", "น\u0e4d\u0e49\u0e32", "การเเสดง", "\u0e38โพสต์",
+                     "จ\u0e31\u0e31มป์", "ล\u0e47\u0e47อก", "อนุสรณ\u0e4c\u0e4c",
+                     "จักรพันธ\u0e4c\u0e38", "น\u0e33\u0e49"]:
+            self.assertIsNotNone(thai_spelling_problem(word), word)
+        # canonical words and intentional elongations in misspellings/ pass
+        for word in ["กระทำ", "น้ำ", "การแสดง", "จักรพันธุ์", "ค่าา", "จ้าาา", "ณัฐ"]:
+            self.assertIsNone(thai_spelling_problem(word), word)
 
     def test_load_words(self):
         with tempfile.TemporaryDirectory() as tmpdir:

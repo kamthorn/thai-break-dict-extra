@@ -19,6 +19,38 @@ INVISIBLE_CHARS = {
     "\u00a0": "Non-breaking space",
 }
 
+# Thai combining marks: Mai Han-akat, above/below vowels, Mai Taikhu .. Yamakkan
+COMBINING_MARKS = set("\u0e31") | {chr(c) for c in range(0x0E34, 0x0E3B)} | {chr(c) for c in range(0x0E47, 0x0E4F)}
+ABOVE_BELOW_VOWELS = set("\u0e31\u0e47") | {chr(c) for c in range(0x0E34, 0x0E3B)}
+TONE_MARKS = {chr(c) for c in range(0x0E48, 0x0E4C)}
+TONE_OR_THANTHAKHAT = TONE_MARKS | {"\u0e4c"}
+
+
+def thai_spelling_problem(word: str) -> str | None:
+    """
+    Returns why `word` is not in canonical Thai spelling, or None.
+
+    Tokenizers match text with เเ and decomposed Sara Am recomposed, so entries
+    spelled that way can never match. Repeated follow vowels (e.g. ค่าา) are
+    allowed: they are intentional elongations in misspellings/.
+    """
+    if "\u0e40\u0e40" in word:
+        return "Sara E twice (เเ); write แ"
+    for i, c in enumerate(word):
+        prev = word[i - 1] if i else ""
+        nxt = word[i + 1] if i + 1 < len(word) else ""
+        if c == "\u0e4d" and (nxt == "\u0e32" or (nxt in TONE_MARKS and word[i + 2:i + 3] == "\u0e32")):
+            return "decomposed Sara Am (ํ + า); write ำ"
+        if i == 0 and c in COMBINING_MARKS:
+            return "starts with a combining mark"
+        if c in TONE_OR_THANTHAKHAT and nxt in ABOVE_BELOW_VOWELS:
+            return "tone mark or thanthakhat before a vowel; write the vowel first"
+        if c == "\u0e33" and nxt in TONE_MARKS:
+            return "tone mark after Sara Am; write it before ำ"
+        if c in COMBINING_MARKS and (nxt == c or (c in TONE_MARKS and nxt in TONE_MARKS)):
+            return f"repeated mark U+{ord(c):04X}"
+    return None
+
 
 def validate_file(filepath: Path) -> list[str]:
     """
@@ -82,6 +114,10 @@ def validate_file(filepath: Path) -> list[str]:
             errors.append(
                 f"Line {idx}: '{line}' is a bare single character. Bare single consonants break tokenizers and are disallowed."
             )
+
+        problem = thai_spelling_problem(line)
+        if problem:
+            errors.append(f"Line {idx}: '{line}' is not in canonical Thai spelling: {problem}.")
 
         # Duplicate check within file
         if line in seen_words:
