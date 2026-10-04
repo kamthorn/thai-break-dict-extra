@@ -12,7 +12,7 @@
 
 ## 📁 โครงสร้างหมวดหมู่คำศัพท์ (`data/`)
 
-จัดหมวดหมู่แบบแยกโฟลเดอร์ 15 หมวดหมู่ รวม 40 ไฟล์คำศัพท์ (28,184 คำหลังรวมและตัดซ้ำ):
+จัดหมวดหมู่แบบแยกโฟลเดอร์ 15 หมวดหมู่ รวม 39 ไฟล์คำศัพท์ (18,109 คำหลังรวมและตัดซ้ำ):
 
 ```text
 data/
@@ -111,10 +111,10 @@ python3 scripts/validate.py
 
 ### 3. การรวมคำศัพท์และการสร้างพจนานุกรม (`build.py`)
 รวบรวมคำศัพท์จากหมวดหมู่ที่ต้องการ คำนวณค่าน้ำหนักตาม Tier หมวดหมู่ และส่งออกเป็น 4 รูปแบบพร้อมกันใน `dist/` (พร้อมชุด Lines preset ที่สร้างอัตโนมัติ):
-- `dist/words-extra.txt`: รายการคำเรียงตามตัวอักษร (1 คำต่อบรรทัด, 28,184 คำ)
+- `dist/words-extra.txt`: รายการคำเรียงตามตัวอักษร (1 คำต่อบรรทัด, 18,109 คำ)
 - `dist/words-extra.tsv`: คำศัพท์พร้อมค่าน้ำหนักภาษาศาสตร์ (Tier Weights 0.5 - 8.0)
-- `dist/words-extra.dawg`: พจนานุกรมไบนารีคอมแพกต์ Minimal DAWG (~271 KB) สำหรับ Go, TypeScript, PHP
-- `dist/words-extra.fst`: พจนานุกรมไบนารี Finite State Transducer (~688 KB) สำหรับ Rust, C/C++, Python (C-FFI) รองรับ zero-copy mmap
+- `dist/words-extra.dawg`: พจนานุกรมไบนารีคอมแพกต์ Minimal DAWG (~209 KB) สำหรับ Go, TypeScript, PHP
+- `dist/words-extra.fst`: พจนานุกรมไบนารี Finite State Transducer (~491 KB) สำหรับ Rust, C/C++, Python (C-FFI) รองรับ zero-copy mmap
 - `dist/words-extra-lines.{txt,tsv,dawg,fst}`: ชุดคำสำหรับโหมดจัดบรรทัด (ตัดชื่อเฉพาะ/โรงเรียน/คำประสมข่าวออก, 9,218 คำ) สร้างอัตโนมัติเมื่อ build แบบ default
 
 ```bash
