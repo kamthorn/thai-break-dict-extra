@@ -41,6 +41,7 @@ DEFAULT_TIER_WEIGHTS = {
     "news/compounds": 4.5,
     "news/connectives": 4.0,
     "news/royal": 4.0,
+    "royal/vocabulary": 4.0,
     "abbreviations/ranks": 5.0,
     "abbreviations/titles": 5.0,
     "abbreviations/addresses": 5.0,
@@ -76,6 +77,7 @@ CATEGORY_DEFAULT_WEIGHTS = {
     "proper-names": 5.0,
     "abbreviations": 4.5,
     "news": 4.0,
+    "royal": 4.0,
     "transit": 4.5,
     "education": 4.0,
     "domains": 3.5,
@@ -424,7 +426,7 @@ def main():
         lines_dawg = args.output.parent / "words-extra-lines.dawg"
         lines_fst = args.output.parent / "words-extra-lines.fst"
 
-        excluded_for_lines = {"proper-names", "education", "news"}
+        excluded_for_lines = {"proper-names", "education", "news", "royal"}
         lines_words = {}
         for file_path, category, stem in filtered_files:
             if category in excluded_for_lines:

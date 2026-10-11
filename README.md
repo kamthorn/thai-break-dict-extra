@@ -12,7 +12,7 @@
 
 ## 📁 โครงสร้างหมวดหมู่คำศัพท์ (`data/`)
 
-จัดหมวดหมู่แบบแยกโฟลเดอร์ 15 หมวดหมู่ รวม 39 ไฟล์คำศัพท์ (18,109 คำหลังรวมและตัดซ้ำ):
+จัดหมวดหมู่แบบแยกโฟลเดอร์ 16 หมวดหมู่ รวม 40 ไฟล์คำศัพท์ (18,166 คำหลังรวมและตัดซ้ำ):
 
 ```text
 data/
@@ -30,6 +30,9 @@ data/
 │   ├── compounds.txt         # คำประสมกริยา/คำนามข่าว (ดำเนินการ, เสียชีวิต, ก่อเหตุ, ที่เกิดเหตุ)
 │   ├── connectives.txt       # คำเชื่อมและสำนวนบอกกาล/เงื่อนไข (ดังกล่าว, เนื่องจาก, อย่างไรก็ตาม)
 │   └── royal.txt             # คำราชาศัพท์และพระนามในข่าวพระราชสำนัก
+│
+├── royal/                    # ราชาศัพท์ที่เป็นหน่วยคำตายตัว (เขียนเองจากความรู้ภาษา ไม่ได้สกัดจากคลังข้อมูล)
+│   └── vocabulary.txt        # พระชนมพรรษา, พระบรมราชานุญาต, พระบรมวงศานุวงศ์, สมเด็จพระเทพรัตนราชสุดา
 │
 ├── abbreviations/            # คำย่อและอักษรย่อที่ใช้บ่อย
 │   ├── common.txt            # คำย่อทั่วไป ทั้งแบบมีจุดและไม่มีจุด
@@ -111,11 +114,11 @@ python3 scripts/validate.py
 
 ### 3. การรวมคำศัพท์และการสร้างพจนานุกรม (`build.py`)
 รวบรวมคำศัพท์จากหมวดหมู่ที่ต้องการ คำนวณค่าน้ำหนักตาม Tier หมวดหมู่ และส่งออกเป็น 4 รูปแบบพร้อมกันใน `dist/` (พร้อมชุด Lines preset ที่สร้างอัตโนมัติ):
-- `dist/words-extra.txt`: รายการคำเรียงตามตัวอักษร (1 คำต่อบรรทัด, 18,109 คำ)
+- `dist/words-extra.txt`: รายการคำเรียงตามตัวอักษร (1 คำต่อบรรทัด, 18,166 คำ)
 - `dist/words-extra.tsv`: คำศัพท์พร้อมค่าน้ำหนักภาษาศาสตร์ (Tier Weights 0.5 - 8.0)
-- `dist/words-extra.dawg`: พจนานุกรมไบนารีคอมแพกต์ Minimal DAWG (~209 KB) สำหรับ Go, TypeScript, PHP
-- `dist/words-extra.fst`: พจนานุกรมไบนารี Finite State Transducer (~491 KB) สำหรับ Rust, C/C++, Python (C-FFI) รองรับ zero-copy mmap
-- `dist/words-extra-lines.{txt,tsv,dawg,fst}`: ชุดคำสำหรับโหมดจัดบรรทัด (ตัดชื่อเฉพาะ/โรงเรียน/คำประสมข่าวออก, 9,218 คำ) สร้างอัตโนมัติเมื่อ build แบบ default
+- `dist/words-extra.dawg`: พจนานุกรมไบนารีคอมแพกต์ Minimal DAWG (~210 KB) สำหรับ Go, TypeScript, PHP
+- `dist/words-extra.fst`: พจนานุกรมไบนารี Finite State Transducer (~494 KB) สำหรับ Rust, C/C++, Python (C-FFI) รองรับ zero-copy mmap
+- `dist/words-extra-lines.{txt,tsv,dawg,fst}`: ชุดคำสำหรับโหมดจัดบรรทัด (ตัดชื่อเฉพาะ/โรงเรียน/คำประสมข่าวและราชาศัพท์ออก, 9,214 คำ) สร้างอัตโนมัติเมื่อ build แบบ default
 
 ```bash
 # 1. รวมคำศัพท์พิเศษทั้งหมดพร้อมคำนวณค่าน้ำหนัก (ค่าเริ่มต้น)
@@ -264,6 +267,7 @@ python3 -m unittest discover tests
 | thailand-geography-json (Joe Takara) | `proper-names/{provinces,districts,subdistricts}.txt` | MIT © 2023-Present Joe Takara | https://github.com/thailand-geography-data/thailand-geography-json |
 | วิกิพีเดียภาษาไทย | ชื่อเฉพาะ/องค์กร/สถานที่ | CC BY-SA 4.0 | ลิงก์บทความต้นทาง |
 | ประมวลกฎหมายไทย | `domains/legal.txt` | Public Domain (ม.7 พ.ร.บ.ลิขสิทธิ์) | — |
+| ราชาศัพท์ 62 คำ (เขียนเองจากความรู้ภาษา ไม่ได้สกัดจากคลังข้อความ) | `royal/vocabulary.txt` | CC0-1.0 | — |
 | LST20 / Blackboard Treebank | ทดสอบใน `local/` และสกัดสถิติ bigram ไว้ใช้ภายในเท่านั้น | NECTEC Data Agreement — **ห้าม commit ลง `data/`/`dist/`** จนกว่าเจ้าของจะอนุญาต | อ้างอิง technical report ของ NECTEC เมื่อใช้งาน |
 
 ## 📜 สัญญาอนุญาต (License)
