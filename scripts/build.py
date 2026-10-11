@@ -19,6 +19,7 @@ STRIP_CHARS = "\ufeff\u200b\u200c\u200d\u200e\u200f\r\n\t "
 DEFAULT_TIER_WEIGHTS = {
     # Tier 1: Fixed Proper Names, Countries & Months (Weight 6.0 - 8.0)
     "proper-names/provinces": 8.0,
+    "abbreviations/months": 7.0,
     # Dotless month abbrevs (มค, มีค, ...): hijack ordinary text by word-count
     # advantage (มีค in มีความเสี่ยง), so pin at 0.5 -- they still match literal
     # dates (5 มีค 2567) but always lose to base-word paths.
@@ -37,6 +38,10 @@ DEFAULT_TIER_WEIGHTS = {
     # 1.0; kept at the short-word guardrail ceiling to avoid any length bonus.
     "education/universities": 5.0,
     # Tier 2: Abbreviations
+    "abbreviations/ranks": 5.0,
+    "abbreviations/titles": 5.0,
+    "abbreviations/addresses": 5.0,
+    "abbreviations/units": 4.0,
     "abbreviations/common": 4.0,
     "politics/parties": 4.0,
     "transit/roads": 4.5,
