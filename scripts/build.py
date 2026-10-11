@@ -19,7 +19,6 @@ STRIP_CHARS = "\ufeff\u200b\u200c\u200d\u200e\u200f\r\n\t "
 DEFAULT_TIER_WEIGHTS = {
     # Tier 1: Fixed Proper Names, Countries & Months (Weight 6.0 - 8.0)
     "proper-names/provinces": 8.0,
-    "abbreviations/months": 7.0,
     # Dotless month abbrevs (มค, มีค, ...): hijack ordinary text by word-count
     # advantage (มีค in มีความเสี่ยง), so pin at 0.5 -- they still match literal
     # dates (5 มีค 2567) but always lose to base-word paths.
@@ -37,15 +36,7 @@ DEFAULT_TIER_WEIGHTS = {
     # (1 edge vs. 2 in the Viterbi cost graph), so this only needs to clear
     # 1.0; kept at the short-word guardrail ceiling to avoid any length bonus.
     "education/universities": 5.0,
-    # Tier 2: Core News Compounds & Abbreviations
-    "news/compounds": 4.5,
-    "news/connectives": 4.0,
-    "news/royal": 4.0,
-    "royal/vocabulary": 4.0,
-    "abbreviations/ranks": 5.0,
-    "abbreviations/titles": 5.0,
-    "abbreviations/addresses": 5.0,
-    "abbreviations/units": 4.0,
+    # Tier 2: Abbreviations
     "abbreviations/common": 4.0,
     "politics/parties": 4.0,
     "transit/roads": 4.5,
@@ -76,8 +67,6 @@ DEFAULT_TIER_WEIGHTS = {
 CATEGORY_DEFAULT_WEIGHTS = {
     "proper-names": 5.0,
     "abbreviations": 4.5,
-    "news": 4.0,
-    "royal": 4.0,
     "transit": 4.5,
     "education": 4.0,
     "domains": 3.5,
@@ -419,14 +408,14 @@ def main():
         compile_fst_if_available(tsv_output, fst_output)
 
     # 5. Automatically build lines layout preset for thai-break-service
-    # (excludes proper-names, education, news compounds to allow flexible line wrapping)
+    # (excludes proper-names and education to allow flexible line wrapping)
     if args.output == Path("dist/words-extra.txt") and not args.include and not args.exclude:
         lines_output = args.output.parent / "words-extra-lines.txt"
         lines_tsv = args.output.parent / "words-extra-lines.tsv"
         lines_dawg = args.output.parent / "words-extra-lines.dawg"
         lines_fst = args.output.parent / "words-extra-lines.fst"
 
-        excluded_for_lines = {"proper-names", "education", "news", "royal"}
+        excluded_for_lines = {"proper-names", "education"}
         lines_words = {}
         for file_path, category, stem in filtered_files:
             if category in excluded_for_lines:
