@@ -12,7 +12,7 @@
 
 ## 📁 โครงสร้างหมวดหมู่คำศัพท์ (`data/`)
 
-จัดหมวดหมู่แบบแยกโฟลเดอร์ 14 หมวดหมู่ รวม 36 ไฟล์คำศัพท์ (17,819 คำหลังรวมและตัดซ้ำ):
+จัดหมวดหมู่แบบแยกโฟลเดอร์ 14 หมวดหมู่ รวม 36 ไฟล์คำศัพท์ (14,331 คำหลังรวมและตัดซ้ำ):
 
 ```text
 data/
@@ -106,11 +106,11 @@ python3 scripts/validate.py
 
 ### 3. การรวมคำศัพท์และการสร้างพจนานุกรม (`build.py`)
 รวบรวมคำศัพท์จากหมวดหมู่ที่ต้องการ คำนวณค่าน้ำหนักตาม Tier หมวดหมู่ และส่งออกเป็น 4 รูปแบบพร้อมกันใน `dist/` (พร้อมชุด Lines preset ที่สร้างอัตโนมัติ):
-- `dist/words-extra.txt`: รายการคำเรียงตามตัวอักษร (1 คำต่อบรรทัด, 17,819 คำ)
+- `dist/words-extra.txt`: รายการคำเรียงตามตัวอักษร (1 คำต่อบรรทัด, 14,331 คำ)
 - `dist/words-extra.tsv`: คำศัพท์พร้อมค่าน้ำหนักภาษาศาสตร์ (Tier Weights 0.5 - 8.0)
 - `dist/words-extra.dawg`: พจนานุกรมไบนารีคอมแพกต์ Minimal DAWG (~204 KB) สำหรับ Go, TypeScript, PHP
 - `dist/words-extra.fst`: พจนานุกรมไบนารี Finite State Transducer (~484 KB) สำหรับ Rust, C/C++, Python (C-FFI) รองรับ zero-copy mmap
-- `dist/words-extra-lines.{txt,tsv,dawg,fst}`: ชุดคำสำหรับโหมดจัดบรรทัด (ตัดชื่อเฉพาะและโรงเรียนออก, 9,190 คำ) สร้างอัตโนมัติเมื่อ build แบบ default
+- `dist/words-extra-lines.{txt,tsv,dawg,fst}`: ชุดคำสำหรับโหมดจัดบรรทัด (ตัดชื่อเฉพาะและโรงเรียนออก, 5,663 คำ) สร้างอัตโนมัติเมื่อ build แบบ default
 
 ```bash
 # 1. รวมคำศัพท์พิเศษทั้งหมดพร้อมคำนวณค่าน้ำหนัก (ค่าเริ่มต้น)
@@ -138,8 +138,8 @@ python3 scripts/harvest_geodata.py
 # สกัดชื่อเฉพาะ มหาวิทยาลัย โรงเรียน ทางหลวง องค์กร จากฐานข้อมูลเปิดของวิกิพีเดียไทย (CC BY-SA 4.0)
 python3 scripts/harvest_wikipedia_titles.py
 
-# สกัดชื่อประเทศ คำทับศัพท์ และศัพท์กฎหมาย จาก PyThaiNLP corpus (CC0-1.0) และประมวลกฎหมาย (Public Domain)
-# -> data/proper-names/countries.txt, data/loanwords/*.txt, data/domains/legal.txt
+# สกัดชื่อประเทศจาก PyThaiNLP corpus (CC0-1.0) และศัพท์กฎหมายจากประมวลกฎหมาย (Public Domain)
+# -> data/proper-names/countries.txt, data/domains/legal.txt
 python3 scripts/harvest_pythainlp_cc0.py
 
 # สกัดคำสแลง/ศัพท์โซเชียลจาก Wisesight Sentiment (CC0-1.0) และคำใหม่จาก Thai2fit (CC0-1.0)
@@ -255,7 +255,7 @@ python3 -m unittest discover tests
 | Wisesight Sentiment (26,737 ข้อความโซเชียล) | `slang/internet.txt` (รอบท review) | CC0-1.0 | Suriyawongkul et al., Zenodo 10.5281/zenodo.3457446 |
 | Wisesight word-tokenization (1,153 ประโยคคนตัด) | `data/bigrams-wisesight.tsv` (3,868 คู่) | CC0-1.0 | โฟลเดอร์ word-tokenization ใน repo เดียวกัน |
 | Prachathai-67k (54,380 บทความข่าว) | `data/bigrams-prachathai.tsv` (955,967 คู่คำ) | Apache-2.0 | wannaphong/prachathai67k (HuggingFace) |
-| PyThaiNLP `countries_th.txt`, `th_en_transliteration` | `proper-names/countries.txt`, `loanwords/*.txt` | CC0-1.0 | PyThaiNLP `corpus_license.md` |
+| PyThaiNLP `countries_th.txt` | `proper-names/countries.txt` | CC0-1.0 | PyThaiNLP `corpus_license.md` |
 | thailand-geography-json (Joe Takara) | `proper-names/{provinces,districts,subdistricts}.txt` | MIT © 2023-Present Joe Takara | https://github.com/thailand-geography-data/thailand-geography-json |
 | วิกิพีเดียภาษาไทย | ชื่อเฉพาะ/องค์กร/สถานที่ | CC BY-SA 4.0 | ลิงก์บทความต้นทาง |
 | ประมวลกฎหมายไทย | `domains/legal.txt` | Public Domain (ม.7 พ.ร.บ.ลิขสิทธิ์) | — |
