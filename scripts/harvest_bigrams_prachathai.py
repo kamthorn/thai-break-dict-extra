@@ -37,10 +37,10 @@ SHARDS = [
     "train-00001-of-00002.parquet",
 ]
 
-# Segmenter: use the merged FST from thai-break-service if available,
+# Segmenter: use the merged FST of the thai-break example service if available,
 # else fall back to the base dict.
 SEGMENTER_CANDIDATES = [
-    ROOT.parent / "thai-break-service" / "data" / "words.fst",
+    ROOT.parent / "thai-break" / "examples" / "service" / "data" / "words.fst",
     ROOT.parent / "thai-break" / "data" / "words.fst",
     ROOT.parent / "thai-break" / "data" / "words.txt",
 ]

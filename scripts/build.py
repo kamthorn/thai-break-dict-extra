@@ -412,7 +412,7 @@ def main():
         fst_output = args.output.with_suffix(".fst")
         compile_fst_if_available(tsv_output, fst_output)
 
-    # 5. Automatically build lines layout preset for thai-break-service
+    # 5. Automatically build lines layout preset for the thai-break example service
     # (excludes proper-names and education to allow flexible line wrapping)
     if args.output == Path("dist/words-extra.txt") and not args.include and not args.exclude:
         lines_output = args.output.parent / "words-extra-lines.txt"

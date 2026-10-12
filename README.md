@@ -2,7 +2,7 @@
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](http://creativecommons.org/publicdomain/zero/1.0/)
 
-คลังคำศัพท์พิเศษเสริม (Pluggable / Supplementary Thai Dictionary) สำหรับเพิ่มความแม่นยำในการตัดคำภาษาไทย (Thai Word Tokenization / Segmentation) ให้แก่ระบบตัดคำ เช่น **[thai-break](https://github.com/kamthorn/thai-break)**, **thai-break-service**, หรือ Tokenizer อื่น ๆ
+คลังคำศัพท์พิเศษเสริม (Pluggable / Supplementary Thai Dictionary) สำหรับเพิ่มความแม่นยำในการตัดคำภาษาไทย (Thai Word Tokenization / Segmentation) ให้แก่ระบบตัดคำ เช่น **[thai-break](https://github.com/kamthorn/thai-break)**, **[thai-break service](https://github.com/kamthorn/thai-break/tree/main/examples/service)**, หรือ Tokenizer อื่น ๆ
 
 โปรเจกต์นี้ออกแบบมาเพื่อทำหน้าที่เป็น **พจนานุกรมเสริม (Extra Dictionary)** แยกต่างหากจากพจนานุกรมพื้นฐาน (Base Dictionary) โดยรวบรวมกลุ่มคำเฉพาะทางที่มัก **ไม่ปรากฏในพจนานุกรมทั่วไป** หรือคำที่มักจะถูกตัดเป็นชิ้นเล็กชิ้นน้อยผิดความหมาย เพื่อให้ผู้ใช้สามารถเลือกดึงเฉพาะหมวดหมู่ที่ต้องการไปเสริมคุณภาพได้ตาม Use Case
 
