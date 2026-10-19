@@ -67,6 +67,10 @@ DEFAULT_TIER_WEIGHTS = {
     "misspellings/common": 0.5,
     # Tier 3.5: General extended vocabulary (Thai2fit, general corpus)
     "general/thai2fit": 2.0,
+    # Compounds that share a part with a frequent longer word: ค้าขาย at the normal general weight
+    # takes ค้า from แม่ค้า / พ่อค้า (แม่ค้า|ขาย became แม่|ค้าขาย 12 times in 65,014 news paragraphs);
+    # at 1.0 it still joins ค้า|ขาย (72 times) and takes none.
+    "general/compounds-low-weight": 1.0,
 }
 
 CATEGORY_DEFAULT_WEIGHTS = {
