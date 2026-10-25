@@ -138,7 +138,7 @@ python3 scripts/build.py --base-dict ../thai-break/data/words.txt
 # -> data/proper-names/{provinces,districts,subdistricts}.txt
 python3 scripts/harvest_geodata.py
 
-# สกัดชื่อเฉพาะ มหาวิทยาลัย โรงเรียน ทางหลวง องค์กร จากฐานข้อมูลเปิดของวิกิพีเดียไทย (CC BY-SA 4.0)
+# สกัดชื่อเฉพาะ มหาวิทยาลัย โรงเรียน ทางหลวง องค์กร จากชื่อหน้าของวิกิพีเดียไทย (CC BY-SA 4.0; ใช้เฉพาะชื่อหน้า ไม่ใช้เนื้อหา)
 python3 scripts/harvest_wikipedia_titles.py
 
 # สกัดชื่อประเทศจาก PyThaiNLP corpus (CC0-1.0) และศัพท์กฎหมายจากประมวลกฎหมาย (Public Domain)
@@ -260,12 +260,14 @@ python3 -m unittest discover tests
 | Prachathai-67k (54,380 บทความข่าว) | `data/bigrams-prachathai.tsv` (955,967 คู่คำ) | Apache-2.0 | wannaphong/prachathai67k (HuggingFace) |
 | PyThaiNLP `countries_th.txt` | `proper-names/countries.txt` | CC0-1.0 | PyThaiNLP `corpus_license.md` |
 | thailand-geography-json (Joe Takara) | `proper-names/{provinces,districts,subdistricts}.txt` | MIT © 2023-Present Joe Takara | https://github.com/thailand-geography-data/thailand-geography-json |
-| วิกิพีเดียภาษาไทย | ชื่อเฉพาะ/องค์กร/สถานที่ | CC BY-SA 4.0 | ลิงก์บทความต้นทาง |
+| วิกิพีเดียภาษาไทย (เฉพาะชื่อหน้า ไม่มีเนื้อหา) | ชื่อเฉพาะ/องค์กร/สถานที่ | CC BY-SA 4.0 | ลิงก์บทความต้นทาง |
 | ประมวลกฎหมายไทย | `domains/legal.txt` | Public Domain (ม.7 พ.ร.บ.ลิขสิทธิ์) | — |
 | LST20 / Blackboard Treebank | ใช้วัดผล (benchmark) เท่านั้น ไม่ได้เป็นแหล่งคำในพจนานุกรมใดใน repo นี้ | NECTEC Data Agreement (ไม่แจกจ่ายข้อมูลต้นทาง) | อ้างอิง technical report ของ NECTEC เมื่อใช้งาน |
 
 ## 📜 สัญญาอนุญาต (License)
 
 โปรเจกต์นี้และคลังคำศัพท์ทั้งหมดเผยแพร่ภายใต้สัญญาอนุญาต **[Creative Commons Zero 1.0 Universal (CC0 1.0)](LICENSE)** — Public Domain Dedication
+
+**เรื่องแหล่งข้อมูลที่ไม่ใช่ CC0:** จากวิกิพีเดียภาษาไทย (CC BY-SA 4.0) ใช้เฉพาะ *ชื่อหน้า* ซึ่งเป็นคำและชื่อสามัญสั้น ๆ (ไม่นำเนื้อหาบทความ ข้อความอธิบาย หรือโครงสร้างของวิกิพีเดียมา) รายการคำและชื่อดังกล่าวเป็นข้อเท็จจริงที่ใครก็ใช้ได้และอ้างความเป็นเจ้าของไม่ได้ เราจึงถือว่าไม่ติดเงื่อนไข share-alike หากท่านเห็นต่างหรือพบปัญหา กรุณาแจ้งผ่าน issue เพื่อให้ตรวจสอบและนำคำนั้นออก เช่นเดียวกับแหล่งที่มีเงื่อนไข attribution (MIT, Apache-2.0) ที่ระบุไว้ในตารางข้างต้น
 
 ทุกคนสามารถนำข้อมูลคำศัพท์และเครื่องมือในคลังนี้ไปใช้งาน ทำซ้ำ ดัดแปลง รวมเข้ากับซอฟต์แวร์อื่น หรือแจกจ่ายต่อได้อย่างเสรี ไม่ว่าจะเป็นงานเชิงพาณิชย์ (Commercial) หรือโครงการส่วนบุคคล โดยไม่มีข้อผูกมัดหรือเงื่อนไขทางกฎหมายใด ๆ

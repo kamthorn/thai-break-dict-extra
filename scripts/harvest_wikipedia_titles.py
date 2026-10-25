@@ -4,7 +4,10 @@ scripts/harvest_wikipedia_titles.py
 Harvests clean Thai named entities, institutions, infrastructure, and domain terms
 from the official Thai Wikipedia title dump (thwiki-latest-all-titles-in-ns0.gz).
 
-Licensed under CC BY-SA 4.0 / Wikimedia Foundation.
+Source: Thai Wikipedia, whose text is CC BY-SA 4.0 / Wikimedia Foundation. Only page titles are
+used: short common words and names, with no article text, structure or other content. Words and
+names are facts that nobody can own, so the harvested lists are released under CC0 with the rest of
+this repository.
 """
 
 import gzip
